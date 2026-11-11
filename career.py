@@ -36,7 +36,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = "0.8.0"
+VERSION = "0.8.1"
 REPO = "https://github.com/Whosekey-Labs/career-skill"
 # 일반 브라우저와 같은 값 하나만 쓴다 (바꿔 가며 속이지 않는다).
 USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -2082,12 +2082,17 @@ def pick_balanced(jobs, n, per_site=2):
     (마감일이 없는 전문 사이트 공고가 뒤로 밀려 통째로 잘리는 것을 막는다)"""
     if len(jobs) <= n:
         return jobs
-    chosen, count = [], {}
+    # 돌아가며 한 건씩 뽑아(라운드 로빈) n이 작아도 모든 사이트가 최소 1건은 들어가게 한다
+    by_site = {}
     for j in jobs:
-        if count.get(j["site"], 0) < per_site:
-            chosen.append(j)
-            count[j["site"]] = count.get(j["site"], 0) + 1
-    chosen = chosen[:n]
+        by_site.setdefault(j["site"], []).append(j)
+    chosen = []
+    for rnd in range(per_site):
+        for site_jobs in by_site.values():
+            if len(chosen) >= n:
+                break
+            if rnd < len(site_jobs):
+                chosen.append(site_jobs[rnd])
     for j in jobs:
         if len(chosen) >= n:
             break
@@ -2254,6 +2259,7 @@ def cmd_search(a):
         if any(s != "saramin" for s in sites):
             notes.append("직무 코드는 사람인에만 적용돼요. 다른 사이트도 보려면 -k 키워드를 함께 주세요.")
     found, errors = [], []
+    failed = set()
     for kw in keywords:
         for s in sites:
             if not kw and s != "saramin":
@@ -2265,6 +2271,7 @@ def cmd_search(a):
                 found += SITES[s](kw, f, a.limit)
             except Exception as e:  # 한 사이트가 실패해도 나머지는 계속
                 errors.append(f"{s}/{kw}: {e}")
+                failed.add(s)
     jobs = tidy(found, today)
     if spec:                         # 모든 사이트 결과에 같은 지역 기준을 적용한다
         kept = []
@@ -2282,6 +2289,9 @@ def cmd_search(a):
         jobs = [j for j in jobs if want and want in norm_company(j["company"])]
     if a.new_only:
         jobs = filter_new(jobs)
+    found_by = {}
+    for j in jobs:
+        found_by[j["site"]] = found_by.get(j["site"], 0) + 1
     jobs = pick_balanced(jobs, a.max)
     if a.new_only:
         record_seen(jobs)
@@ -2292,10 +2302,24 @@ def cmd_search(a):
     if unknown:
         notes.append(f"지역 표시 없는 공고 {sum(unknown.values())}건 포함: " +
                      ", ".join(f"{k} {v}건" for k, v in unknown.items()) + " — 근무지는 공고에서 확인하세요.")
+    # 사이트별 건수 (0건·실패도 보이게 — 에이전트가 어디를 확인했는지 사용자에게 그대로 보여 준다)
+    counts = {}
+    for j in jobs:
+        counts[j["site"]] = counts.get(j["site"], 0) + 1
+    per_site = []
+    for key in sites:
+        if key not in SITES:
+            continue
+        name = SITE_NAMES.get(key, key).split(" — ")[0]
+        shown, total = counts.get(name, 0), found_by.get(name, 0)
+        if key in failed and not total:
+            per_site.append(f"{name} 실패")
+        else:
+            per_site.append(f"{name} {shown}" + (f"/{total}" if total > shown else ""))
     if a.json:
         for j in jobs:
             j.pop("_d", None)
-        print(json.dumps({"jobs": jobs, "errors": errors, "notes": notes}, ensure_ascii=False))
+        print(json.dumps({"jobs": jobs, "errors": errors, "notes": notes, "per_site": per_site}, ensure_ascii=False))
         return
     cond = " · ".join(x for x in (a.location, a.experience, a.salary and f"{a.salary}만원 이상", a.emp_type) if x)
     label = ", ".join(k for k in keywords if k) or f"사람인 직무코드 {a.job_code or ''} {a.industry or ''}".strip()
@@ -2305,6 +2329,7 @@ def cmd_search(a):
     for n_ in notes:
         head += f"\n({n_})"
     print(render(jobs, today, head))
+    print("\n사이트별(스크립트, 보여 준 수/찾은 수): " + " · ".join(per_site))
     if errors:
         print("\n(일부 실패: " + " / ".join(errors) + ")")
 
