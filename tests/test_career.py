@@ -45,6 +45,58 @@ class UrlCheckTest(unittest.TestCase):
     def test_allows_job_sites(self):
         career.check_url("https://www.saramin.co.kr/zf_user/search")
         career.check_url("https://www.kofia.or.kr/brd/m_96/list.do")
+        for ok in ("https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do",
+                   "https://www.nursejob.co.kr/recruit/search.php", "https://kr.linkedin.com/jobs/view/1",
+                   "https://okky.kr/articles/1", "http://lawlandr.kabl.kr/modules/kabl/job/list_json.kabl"):
+            career.check_url(ok)
+
+    def test_rejects_lookalike_new_hosts(self):
+        for bad in ("https://nursejob.co.kr.evil.com/", "https://evilokky.kr/", "https://work24.go.kr@evil.com/"):
+            with self.assertRaises(RuntimeError):
+                career.check_url(bad)
+
+
+class DateHelperTest(unittest.TestCase):
+    def test_iso(self):
+        self.assertEqual(career._iso("2026/11/11"), "2026-11-11")
+        self.assertEqual(career._iso("2026.1.5"), "2026-01-05")
+        self.assertEqual(career._iso("26-11-06"), "2026-11-06")
+        self.assertEqual(career._iso("상시채용"), "상시채용")
+        self.assertIsNone(career._iso(None))
+
+    def test_date_and_dates(self):
+        self.assertEqual(career._date("등록 2026.11.05 마감 2026.11.30"), "2026-11-05")
+        self.assertEqual(career._dates("26.11.10 ~ 26.11.20"), ["2026-11-10", "2026-11-20"])
+        self.assertIsNone(career._date("날짜 없음"))
+
+    def test_ago(self):
+        today = dt.date.today()
+        self.assertEqual(career._ago("4분전"), today.isoformat())
+        self.assertEqual(career._ago("3일전"), (today - dt.timedelta(days=3)).isoformat())
+        self.assertEqual(career._ago("2026.10.29"), "2026-10-29")
+        self.assertIsNone(career._ago(""))
+
+    def test_match(self):
+        self.assertTrue(career._match("간호사 병동", "병동 간호사 모집"))
+        self.assertFalse(career._match("간호사 수술실", "병동 간호사 모집"))
+        self.assertTrue(career._match("", "아무거나"))
+
+
+class PageTextTest(unittest.TestCase):
+    def test_skips_menu(self):
+        page = ("<html><head><title>[ABC병원] 병동 간호사 모집 - 널스잡</title></head><body>"
+                "<nav>채용정보 인재정보 알바정보</nav><div>로그인</div><div>회원가입</div>"
+                "<h1>병동 간호사 모집</h1><p>근무조건 3교대</p><footer>회사소개</footer></body></html>")
+        text = career._page_text(page)
+        self.assertTrue(text.startswith("병동 간호사 모집"))
+        self.assertIn("근무조건", text)
+        self.assertNotIn("회사소개", text)
+
+
+class RegistryTest(unittest.TestCase):
+    def test_every_site_has_name_and_host(self):
+        for key in career.SITES:
+            self.assertIn(key, career.SITE_NAMES)
 
 
 if __name__ == "__main__":
