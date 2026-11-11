@@ -31,7 +31,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 REPO = "https://github.com/Whosekey-Labs/career-skill"
 # 일반 브라우저와 같은 값 하나만 쓴다 (바꿔 가며 속이지 않는다).
 USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
