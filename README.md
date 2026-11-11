@@ -615,6 +615,7 @@ python3 career.py search -k "퍼포먼스 마케터" --location 서울 --experie
 python3 career.py search -k "부동산 PF,자산운용" --sites saramin,jobkorea,kofia
 python3 career.py links -k "간호사"
 python3 career.py job --url "공고 링크"
+python3 career.py count -i 자소서.md      # 문항별 글자 수 (공백 포함·제외)
 python3 -m unittest discover tests      # 테스트
 ```
 
@@ -628,6 +629,17 @@ python3 -m unittest discover tests      # 테스트
 - **지원은 본인이 직접 해요.** 이 스킬은 대신 지원하지 않아요.
 - **천천히 쓰세요.** 스크립트는 같은 사이트를 1~1.8초 간격으로 천천히 열어요. 그래도 짧은 시간에 너무 많이 검색하면 사이트가 접속을 막을 수 있고, 에이전트의 하루 무료 사용량도 빨리 줄어요.
 - **제보할 때 개인정보를 적지 마세요.** 이슈는 누구나 보는 공개 글이에요.
+
+## 참고한 공개 자료
+
+회사 분석·자소서 지침은 아래 공개 자료의 아이디어를 참고해 우리 말로 새로 썼어요. 문장을 그대로 옮기지 않았어요.
+
+- [thesun4sky/jobstack](https://github.com/thesun4sky/jobstack) (MIT) — 치환 테스트, 수치는 확보한 것만, 예상 면접 질문
+- [KangRyun/jasoseo-plugin](https://github.com/KangRyun/jasoseo-plugin) (MIT) — 회사 사실과 내 경험을 짝짓는 표, 문항 구성·글자 수 규칙, 문체 규칙
+- [djfksjd/cover-letter-team](https://github.com/djfksjd/cover-letter-team) (MIT) — 경험 검증 질문, 지원동기 따로 묻기, 공고의 AI 사용 규정 확인
+- [useful-skills/job-application-skills](https://github.com/useful-skills/job-application-skills) (MIT) — 출처 등급, 같은 이름 법인 확인, 회사 규모별 확인 항목
+- [wing0828/ai-job-search-kr](https://github.com/wing0828/ai-job-search-kr) (MIT) — 문항별 경험 배분, 글자 수 목표
+- 그 밖에 공개 강의·글(면접왕 이형, 링커리어 DART 보는 법 등)의 아이디어
 
 ## 라이선스
 

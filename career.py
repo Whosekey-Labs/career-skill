@@ -6,6 +6,7 @@
   sites   검색할 수 있는 사이트 목록 (--sites 값 — 이름 — 강점)
   links   스크립트로 못 여는 사이트(캐치·링커리어 등)의 검색 링크 — 에이전트 브라우저로 연다
   job     공고 URL 하나의 본문을 텍스트로 출력
+  count   자소서 글자 수 세기 (문항 제목 단위, 공백 포함·제외, 제한 대비 %)
 
 동작 원칙:
   - 본인 구직용 도구. 일반 브라우저 User-Agent 하나를 고정해서 쓴다.
@@ -2183,6 +2184,37 @@ def cmd_job(a):
         print("\n(본문이 짧아요. 에이전트 브라우저로 공고를 열어 직접 읽어 주세요.)")
 
 
+def count_chars(text: str) -> tuple[int, int]:
+    """자소서 글자 수: (공백 포함, 공백 제외). 줄바꿈은 공백 포함 수에서 빼지 않고 1자로 센다."""
+    body = text.strip()
+    return len(body), len(re.sub(r"\s", "", body))
+
+
+def cmd_count(a):
+    text = open(a.input, encoding="utf-8").read() if a.input else sys.stdin.read()
+    # "## 1. 지원 동기 (… / 제한 600자)" 같은 제목 단위로 나눠 센다. 제목이 없으면 전체를 센다.
+    parts = re.split(r"(?m)^(#{1,3} .*)$", text)
+    sections = []
+    if len(parts) > 1:
+        for i in range(1, len(parts), 2):
+            title, body = parts[i].lstrip("#").strip(), parts[i + 1] if i + 1 < len(parts) else ""
+            if not body.strip() or re.match(r"(바꿔 끼울|문항 체크|예상 면접|핵심 메시지)", title):
+                continue
+            sections.append((title, body))
+    else:
+        sections.append(("전체", text))
+    for title, body in sections:
+        with_sp, no_sp = count_chars(body)
+        limit = re.search(r"제한\s*(\d+)\s*자", title)
+        name = re.sub(r"\s*\(.*?\)\s*$", "", title)
+        line = f"- {name}: 공백 포함 {with_sp}자 / 공백 제외 {no_sp}자"
+        if limit:
+            lim = int(limit.group(1))
+            line += f" / 제한 {lim}자 → {with_sp * 100 // lim}%" + (" (초과!)" if with_sp > lim else
+                                                                    " (90% 미만)" if with_sp < lim * 0.9 else "")
+        print(line)
+
+
 def cmd_sites(a):
     for key in SITES:
         name, _, strength = SITE_NAMES.get(key, key).partition(" — ")
@@ -2221,6 +2253,10 @@ def main():
     j.add_argument("--url", required=True)
     j.add_argument("--max-chars", type=int, default=6000)
     j.set_defaults(fn=cmd_job)
+
+    c = sub.add_parser("count", help="자소서 글자 수 세기 (문항 제목 단위, 공백 포함·제외)")
+    c.add_argument("--input", "-i", help="마크다운 파일 (없으면 표준 입력)")
+    c.set_defaults(fn=cmd_count)
 
     a = ap.parse_args()
     try:

@@ -129,5 +129,10 @@ class RegistryTest(unittest.TestCase):
             self.assertIn(key, career.SITE_NAMES)
 
 
+class CountTest(unittest.TestCase):
+    def test_count_chars(self):
+        self.assertEqual(career.count_chars("가나 다\n라"), (6, 4))
+
+
 if __name__ == "__main__":
     unittest.main()
