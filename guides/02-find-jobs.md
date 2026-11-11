@@ -28,16 +28,16 @@ python3 career.py links -k "퍼포먼스 마케터"     # 브라우저로 볼 �
 - 결과가 3건 미만이면 키워드를 넓히거나(예: "퍼포먼스 마케터" → "마케팅") 조건을 하나 빼고 한 번만 다시 한다.
 - 오류가 나면 그 사이트만 브라우저 모드로 한다.
 
-### 브라우저 (스크립트가 안 될 때, 스크립트가 지원하지 않는 사이트)
+### 브라우저 (기본 흐름에 포함)
 
-검색 결과 1~2페이지를 보고 공고 10~15개를 고른다. 스크립트 결과와 합쳐서 같은 형식으로 보여 준다.
-
-- 사람인: `https://www.saramin.co.kr/zf_user/search?searchType=search&searchword={키워드}` (지역 서울 `&loc_mcd=101000`, 경기 `102000` / 경력 `&exp_cd=2`, 신입 `1`)
-- 잡코리아: `https://www.jobkorea.co.kr/Search/?stext={키워드}&tabType=recruit`
-- 금투협: `https://www.kofia.or.kr/brd/m_96/list.do?srchTp=0&srchWord={키워드}`
-- 리멤버: `https://career.rememberapp.co.kr/job/postings` → 검색창에 키워드
-- 자소설닷컴: `https://jasoseol.com/search?keyword={키워드}`
-- 잡알리오(공공기관): `https://job.alio.go.kr/recruit.do`
+- **직군 전문 사이트**: 해당 직군 파일(`guides/jobs/NN-*.md`)의 "브라우저" 목록에서 2~3곳을 골라 사용자가 시키지 않아도 연다. 검색 결과 1~2페이지에서 공고를 골라 스크립트 결과와 합친다.
+- **스크립트가 실패했을 때**: 같은 사이트를 브라우저로 연다.
+  - 사람인: `https://www.saramin.co.kr/zf_user/search/recruit?searchword={키워드}` (서울 `&loc_mcd=101000`, 경기 `102000` / 경력 `&exp_cd=2`, 신입 `1` / 직무 코드 `&cat_kewd={코드}`)
+  - 잡코리아: `https://www.jobkorea.co.kr/Search/?stext={키워드}&tabType=recruit`
+  - 원티드: `https://www.wanted.co.kr/search?query={키워드}&tab=position`
+  - 리멤버: `https://career.rememberapp.co.kr/job/postings` → 검색창에 키워드
+  - 자소설닷컴: `https://jasoseol.com/search?keyword={키워드}`
+- **스크립트가 지원하지 않는 종합 사이트**: 캐치, 링커리어, 고용24 (`python3 career.py links -k 키워드`로 주소 확인)
 
 출력 형식(스크립트와 같게):
 
