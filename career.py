@@ -19,12 +19,14 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import html
+import http.client
 import json
 import os
 import random
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -85,12 +87,21 @@ def fetch(url: str, accept: str = "text/html", data: bytes | None = None) -> str
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, headers=headers)
     _request_count += 1
-    try:
-        with _opener.open(req, timeout=20) as res:
-            body = res.read().decode(res.headers.get_content_charset() or "utf-8", "replace")
-    finally:
-        _last_hit[host] = time.time()
-    return body
+    for attempt in range(2):          # 끊김·시간 초과·5xx는 잠깐 쉬고 한 번 더
+        try:
+            with _opener.open(req, timeout=20) as res:
+                body = res.read().decode(res.headers.get_content_charset() or "utf-8", "replace")
+            return body
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or attempt:
+                raise RuntimeError(f"{host} 응답 오류 {e.code}") from e
+        except (http.client.IncompleteRead, TimeoutError, urllib.error.URLError, ConnectionError) as e:
+            if attempt:
+                raise RuntimeError(f"{host} 연결이 불안정해요: {e}") from e
+        finally:
+            _last_hit[host] = time.time()
+        time.sleep(2 + random.uniform(0, 1))
+    raise RuntimeError(f"{host} 연결 실패")
 
 
 def strip_tags(s: str) -> str:
