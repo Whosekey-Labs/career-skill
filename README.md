@@ -17,7 +17,8 @@ https://raw.githubusercontent.com/Whosekey-Labs/career-skill/main/SKILL.md 이 �
 | 파일 | 내용 |
 |---|---|
 | `SKILL.md` | 에이전트가 처음 읽는 파일 (순서와 규칙) |
-| `guides/01-profile.md` | 경력·강점 정리 |
+| `guides/00-connect.md` | 처음 연결 점검 (구글 문서·캘린더·메일·채용 사이트 로그인) |
+| `guides/01-profile.md` | 경력·강점 정리 (연결된 사이트 이력서 불러오기) |
 | `guides/02-find-jobs.md` | 공고 찾기 (스크립트 / 브라우저) |
 | `guides/jobs/index.md` | 직군 목차 (25개 직군 파일: 세부 직무·검색 키워드·사람인 코드·전문 사이트) |
 | `guides/03-analyze.md` | 회사 분석 + 공고 요건 정리 |
