@@ -2040,7 +2040,7 @@ def cmd_search(a):
     label = ", ".join(k for k in keywords if k) or f"사람인 직무코드 {a.job_code or ''} {a.industry or ''}".strip()
     head = f"## 공고 {len(jobs)}건 — {label}" + (f" ({cond})" if cond else "") + \
         (" · 새 공고만" if a.new_only else "")
-    print(render(jobs, today, head))
+    print(render(jobs, today, head + f"\n(확인 시각 {dt.datetime.now():%Y-%m-%d %H:%M} · 마감·급여는 사이트에 적힌 그대로)"))
     if errors:
         print("\n(일부 실패: " + " / ".join(errors) + ")")
 
@@ -2083,6 +2083,48 @@ def _page_text(page: str) -> str:
     return text.strip()
 
 
+# ---------------------------------------------------------------- 공고 본문 속 이미지·지원 링크 (이미지 공고 대응)
+
+_IMG_SKIP = re.compile(r"logo|icon|blank|btn|button|banner|sprite|favicon|/static/|_next/|bullet|arrow|spacer|"
+                       r"loading|profile|thumb_s|emoji|badge", re.I)
+
+
+def _next_f_html(page: str) -> str:
+    """Next.js(RSC) 페이지에 묻힌 본문 HTML 조각만 꺼낸다 (잡코리아 상세 등)."""
+    chunks = re.findall(r'self\.__next_f\.push\(\[1,"(.+?)"\]\)', page)
+    if not chunks:
+        return ""
+    merged = "".join(chunks)
+    try:
+        merged = json.loads('"' + merged + '"')
+    except ValueError:
+        return ""
+    # RSC의 텍스트 행("id:T길이,내용")에 본문 HTML이 들어 있다. 환경변수 스크립트 행은 뺀다.
+    rows = re.split(r"\n(?=[0-9a-f]{1,4}:)", merged)
+    parts = [re.sub(r"^[0-9a-f]{1,4}:T[0-9a-f]+,", "", r, count=1) for r in rows
+             if re.match(r"^[0-9a-f]{1,4}:T[0-9a-f]+,", r) and "window.process" not in r]
+    return "\n".join(parts)
+
+
+def _media_and_links(page: str, base: str):
+    """본문에 들어 있는 공고 이미지 주소와 '홈페이지 지원' 같은 외부 지원 링크를 뽑는다."""
+    imgs, links = [], []
+    for src in re.findall(r'<img[^>]+?(?:data-src|src)\s*=\s*["\']([^"\']+)["\']', page, re.I) + \
+            re.findall(r'https?://[^"\'\s<>()]+?\.(?:jpe?g|png|gif|webp)', page, re.I):
+        u = urllib.parse.urljoin(base, html.unescape(src))
+        if u.startswith("http") and not _IMG_SKIP.search(u) and u not in imgs:
+            imgs.append(u)
+    for m in re.finditer(r'<a[^>]+href\s*=\s*["\']([^"\']+)["\'][^>]*>(.*?)</a>', page, re.I | re.S):
+        label = strip_tags(m.group(2))
+        if re.search(r"홈페이지|입사\s*지원|지원하기|채용\s*사이트|바로\s*지원", label):
+            href = html.unescape(m.group(1))
+            home = re.search(r"[?&]home=([^&]+)", href)
+            href = urllib.parse.unquote(home.group(1)) if home else urllib.parse.urljoin(base, href)
+            if href.startswith("http") and href not in links:
+                links.append(href)
+    return imgs[:6], links[:3]
+
+
 def cmd_job(a):
     url = a.url.strip()
     host = urllib.parse.urlparse(url).netloc.lower()
@@ -2091,16 +2133,22 @@ def cmd_job(a):
     except RuntimeError as e:
         print(str(e) + " 에이전트 브라우저로 이 공고를 열어서 읽어 주세요.")
         return
-    text = ""
+    text, raw = "", ""
     rec = re.search(r"rec_idx=(\d+)", url)
     gno = re.search(r"GI_Read/(\d+)", url)
     if "saramin.co.kr" in host and rec:
-        text = strip_tags(fetch(f"https://www.saramin.co.kr/zf_user/jobs/relay/view-detail?rec_idx={rec.group(1)}"))
+        raw = fetch(f"https://www.saramin.co.kr/zf_user/jobs/relay/view-detail?rec_idx={rec.group(1)}")
+        text = strip_tags(raw)
     elif "jobkorea.co.kr" in host and gno:
         page = fetch(f"https://www.jobkorea.co.kr/Recruit/GI_Read/{gno.group(1)}")
         t = re.search(r"<title>([^<]+)", page)
         d = re.search(r'<meta name="description" content="([^"]*)', page)
-        body = strip_tags(fetch(f"https://www.jobkorea.co.kr/Recruit/GI_Read_Comt_Ifrm?Gno={gno.group(1)}"))
+        ifr = fetch(f"https://www.jobkorea.co.kr/Recruit/GI_Read_Comt_Ifrm?Gno={gno.group(1)}")
+        raw = ifr + _next_f_html(ifr)
+        body = strip_tags(_next_f_html(ifr) or ifr)
+        # RSC 행·주석 찌꺼기 줄은 버린다
+        body = "\n".join(l for l in body.splitlines()
+                          if not re.match(r"\s*[0-9a-f]{1,4}:[\[{\"]", l) and 'class="' not in l and "-->" not in l)
         text = "\n".join(x for x in (t and html.unescape(t.group(1)), d and html.unescape(d.group(1)), body) if x)
     elif "wanted.co.kr" in host and re.search(r"/wd/(\d+)", url):
         wid = re.search(r"/wd/(\d+)", url).group(1)
@@ -2118,11 +2166,21 @@ def cmd_job(a):
                                           "우대사항\n" + (d.get("preferred_qualifications") or ""), d.get("recruiting_process")) if x)
     else:
         enc = "cp949" if any(host == h or host.endswith("." + h) for h in CP949_HOSTS) else None
-        text = _page_text(fetch(url, encoding=enc))
-    if len(text) < 200:
-        print(text + "\n\n(본문이 짧아요. 이미지로 된 공고일 수 있어요. 에이전트 브라우저로 공고를 열어 직접 읽어 주세요.)")
-        return
+        raw = fetch(url, encoding=enc)
+        text = _page_text(raw)
+    imgs, links = _media_and_links(raw, url) if raw else ([], [])
+    print(f"(확인 시각 {dt.datetime.now():%Y-%m-%d %H:%M} · 원문 {url})")
     print(text[: a.max_chars] + ("\n…(뒤는 생략)" if len(text) > a.max_chars else ""))
+    if imgs:
+        print("\n## 공고 이미지 — 상세 내용이 이미지에 있을 수 있어요. 에이전트가 열어서 직접 읽고, 읽은 값에는 (이미지에서 읽음)을 붙이세요")
+        for u in imgs:
+            print(f"- {u}")
+    if links:
+        print("\n## 지원 링크 (회사 홈페이지 등)")
+        for u in links:
+            print(f"- {u}")
+    if len(text) < 200 and not imgs:
+        print("\n(본문이 짧아요. 에이전트 브라우저로 공고를 열어 직접 읽어 주세요.)")
 
 
 def cmd_sites(a):
