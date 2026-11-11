@@ -30,7 +30,7 @@ https://raw.githubusercontent.com/Whosekey-Labs/career-skill/main/SKILL.md 이 �
 
 ## 쓸 때 참고
 
-- 본인 취업·이직 준비용이에요. 공고를 모아서 다른 곳에 다시 올리지는 마세요.
+- 본인 취업·이직 준비용이에요. 공고 내용의 권리는 각 채용 사이트와 회사에 있어요. 공고를 모아서 다른 곳에 다시 올리지는 마세요.
 - 같은 사이트는 1~1.8초 사이 랜덤 간격을 두고 천천히 열어요(접속 차단 방지).
 
 <!-- sites:start -->
@@ -430,6 +430,10 @@ python3 career.py links -k "간호사"
 python3 career.py job --url "공고 링크"
 python3 -m unittest discover tests      # 테스트
 ```
+
+## 라이선스
+
+[MIT](LICENSE) — 누구나 자유롭게 쓰고, 고치고, 나눌 수 있어요. 저작권 표시만 남겨 주세요. 검색 결과나 사이트 동작은 보증하지 않아요(사이트가 바뀌면 검색이 안 될 수 있어요).
 
 ## 제보·문의
 
