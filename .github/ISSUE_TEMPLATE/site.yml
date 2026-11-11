@@ -1,0 +1,21 @@
+name: 사이트 추가
+description: 빠진 채용 사이트·협회 게시판·앱을 알려 주세요
+title: "[사이트 추가] "
+labels: ["사이트 추가"]
+body:
+  - type: input
+    id: name
+    attributes: {label: "사이트 이름", placeholder: "예: 베이크잡"}
+    validations: {required: true}
+  - type: input
+    id: url
+    attributes: {label: "주소 (앱이면 앱 이름)", placeholder: "https://"}
+    validations: {required: true}
+  - type: input
+    id: job
+    attributes: {label: "직군·세부 직무", placeholder: "예: 19 음식·조리 / 제과·제빵"}
+  - type: textarea
+    id: why
+    attributes: {label: "어떤 공고가 많은가요?"}
+  - type: markdown
+    attributes: {value: "이름·연락처·이력서 같은 개인정보는 적지 마세요. 공개 글이에요."}

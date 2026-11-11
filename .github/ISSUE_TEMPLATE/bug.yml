@@ -1,0 +1,16 @@
+name: 검색 오류
+description: 스크립트 오류, 엉뚱한 결과, 열리지 않는 사이트
+title: "[검색 오류] "
+labels: ["검색 오류"]
+body:
+  - type: input
+    id: site
+    attributes: {label: "사이트 또는 명령", placeholder: "예: --sites jobkorea / career.py job"}
+    validations: {required: true}
+  - type: textarea
+    id: what
+    attributes: {label: "무슨 일이 있었나요?", description: "실행한 명령과 오류 메시지 (개인정보는 지워 주세요)"}
+    validations: {required: true}
+  - type: input
+    id: agent
+    attributes: {label: "쓰는 에이전트", placeholder: "피클 / Claude / ChatGPT / Codex 등"}

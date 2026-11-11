@@ -25,6 +25,7 @@ https://raw.githubusercontent.com/Whosekey-Labs/career-skill/main/SKILL.md 이 �
 | `guides/04-cover-letter.md` | 자소서 초안 → 내 구글 문서 (구글 계정 연결 안내) |
 | `guides/05-daily.md` | 매일 새 공고 알림 |
 | `guides/fix-phrases.md` | 결과를 고쳐 달라는 말 예시 |
+| `guides/feedback.md` | 빠진 사이트·오류를 저장소 이슈로 제보 |
 | `career.py` | 파이썬 기본 기능만 쓰는 검색 도우미 (설치 필요 없음) |
 
 ## 쓸 때 참고
@@ -430,6 +431,8 @@ python3 career.py job --url "공고 링크"
 python3 -m unittest discover tests      # 테스트
 ```
 
-## 문의
+## 제보·문의
 
-써 보다가 막히거나 내 직군에서 이상하게 나오면 오픈채팅방으로 알려 주세요: https://open.kakao.com/o/g3vAeBWi
+- 빠진 사이트, 검색 오류, 개선 의견은 [이슈](https://github.com/Whosekey-Labs/career-skill/issues/new/choose)로 남겨 주세요. 에이전트에게 "이거 제보해줘"라고 하면 대신 정리해서 올려 줘요(올리기 전에 내용을 보여 줘요).
+- 이슈는 공개 글이에요. 이름·연락처·이력서 같은 개인정보는 적지 마세요.
+- 깃헙 계정이 없으면 오픈채팅방으로 알려 주세요: https://open.kakao.com/o/g3vAeBWi

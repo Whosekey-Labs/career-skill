@@ -1,0 +1,14 @@
+name: 직군·결과 개선
+description: 직군 분류, 검색 키워드, 자소서·분석 형식 등 스킬 개선 의견
+title: "[개선] "
+labels: ["개선"]
+body:
+  - type: input
+    id: area
+    attributes: {label: "어디를", placeholder: "예: 16 의료·보건 직군 / 자소서 형식"}
+  - type: textarea
+    id: idea
+    attributes: {label: "어떻게 바뀌면 좋을까요?"}
+    validations: {required: true}
+  - type: markdown
+    attributes: {value: "이름·연락처·이력서 같은 개인정보는 적지 마세요. 공개 글이에요."}
