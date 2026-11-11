@@ -34,5 +34,12 @@ class TidyTest(unittest.TestCase):
         self.assertEqual(out[0]["alsoOn"], ["잡코리아: b"])
 
 
+class UrlCheckTest(unittest.TestCase):
+    def test_rejects_unsafe(self):
+        for bad in ("file:///etc/passwd", "http://127.0.0.1/", "http://169.254.169.254/latest", "ftp://x.com/"):
+            with self.assertRaises(RuntimeError):
+                career.check_url(bad)
+
+
 if __name__ == "__main__":
     unittest.main()

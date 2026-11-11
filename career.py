@@ -19,9 +19,11 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import html
+import ipaddress
 import json
 import os
 import re
+import socket
 import sys
 import time
 import urllib.parse
@@ -40,11 +42,36 @@ _request_count = 0
 
 # ---------------------------------------------------------------- 공통 HTTP
 
+def check_url(url: str) -> None:
+    """http/https만, 내부망·로컬 주소는 거부한다 (로컬 파일 읽기·내부망 접근 방지)."""
+    u = urllib.parse.urlparse(url)
+    if u.scheme not in ("http", "https") or not u.hostname:
+        raise RuntimeError("http/https 공고 주소만 열 수 있어요.")
+    try:
+        infos = socket.getaddrinfo(u.hostname, None)
+    except socket.gaierror as e:
+        raise RuntimeError(f"주소를 찾을 수 없어요: {u.hostname}") from e
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if not ip.is_global:
+            raise RuntimeError("내부망·로컬 주소는 열 수 없어요.")
+
+
+class _SafeRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        check_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_opener = urllib.request.build_opener(_SafeRedirect)
+
+
 def fetch(url: str, accept: str = "text/html") -> str:
     """같은 사이트는 간격을 두고, 실행당 요청 수를 제한해서 가져온다."""
     global _request_count
     if _request_count >= MAX_REQUESTS:
         raise RuntimeError(f"한 번 실행에 요청은 {MAX_REQUESTS}번까지예요. 키워드를 줄여 주세요.")
+    check_url(url)
     host = urllib.parse.urlparse(url).netloc
     wait = SAME_HOST_GAP - (time.time() - _last_hit.get(host, 0))
     if wait > 0:
@@ -56,7 +83,7 @@ def fetch(url: str, accept: str = "text/html") -> str:
     })
     _request_count += 1
     try:
-        with urllib.request.urlopen(req, timeout=20) as res:
+        with _opener.open(req, timeout=20) as res:
             body = res.read().decode(res.headers.get_content_charset() or "utf-8", "replace")
     finally:
         _last_hit[host] = time.time()
