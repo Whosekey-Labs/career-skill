@@ -478,6 +478,16 @@ SITES = {"saramin": saramin, "jobkorea": jobkorea, "kofia": kofia, "alio": alio,
          "worldjob": worldjob, "kareit": kareit, "wanted": wanted, "jumpit": jumpit, "remember": remember,
          "jasoseol": jasoseol}
 
+# README·안내용 사이트 이름과 강점
+SITE_NAMES = {
+    "saramin": "사람인 — 전 직군, 직무 코드 검색", "jobkorea": "잡코리아 — 전 직군",
+    "wanted": "원티드 — IT·기획·디자인·마케팅, 스타트업·경력", "jumpit": "점핏 — 개발자",
+    "remember": "리멤버 — 경력직·헤드헌팅", "jasoseol": "자소설닷컴 — 대기업·공기업 신입 공채",
+    "kofia": "금융투자협회 — 증권·자산운용", "kareit": "한국리츠협회 — 리츠·부동산 운용·개발",
+    "alio": "잡알리오 — 공공기관", "gojobs": "나라일터 — 공무원 임기제·경력경쟁·공무직",
+    "worldjob": "월드잡플러스 — 해외 취업",
+}
+
 
 # ---------------------------------------------------------------- 정리 (만료·중복·정렬)
 
