@@ -1,0 +1,4 @@
+__pycache__/
+career_data/
+*.docx
+.DS_Store
