@@ -93,6 +93,36 @@ class PageTextTest(unittest.TestCase):
         self.assertNotIn("회사소개", text)
 
 
+class SmallSiteParserTest(unittest.TestCase):
+    def test_gnuboard_table_row(self):
+        page = ('<table><tbody><tr><td> 2026-11-06 </td>'
+                '<td><a class="com_name" href="https://x.com/bbs/board.php?bo_table=guin&amp;wr_id=4479">부천다온요양병원</a></td>'
+                '<td><a href="https://x.com/bbs/board.php?bo_table=guin&amp;wr_id=4479">단체<b class="sch_word">급식</b> 조리사 구인</a></td>'
+                '<td>조리사</td><td> 경기 부천 </td><td></td></tr></tbody></table>')
+        r = career.gnu_parse(page, "x.com", "guin", "영양사잡", 5)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["title"], "단체급식 조리사 구인")
+        self.assertEqual(r[0]["company"], "부천다온요양병원")
+        self.assertEqual(r[0]["postedDate"], "2026-11-06")
+        self.assertEqual(r[0]["location"], "경기 부천")
+        self.assertTrue(r[0]["url"].endswith("bo_table=guin&wr_id=4479"))
+
+    def test_gnuboard_single_quote_and_plain_company(self):
+        page = ("<tr><td><img src='u.gif'></td><td>포쉬네일AK광명점</td>"
+                "<td><a class='b1' href='../bbs/board.php?bo_table=guin&wr_id=15298'><span>함께 할 선생님 모셔요</span></a></td>"
+                "<td>네일아트</td><td>경기 광명시</td></tr>")
+        r = career.gnu_parse(page, "y.com", "guin", "네일링크", 5)
+        self.assertEqual(r[0]["company"], "포쉬네일AK광명점")
+        self.assertEqual(r[0]["title"], "함께 할 선생님 모셔요")
+
+    def test_new_hosts_allowed(self):
+        for url in ("https://xn--vb0b9ha655ovjk91aba684a.com/bbs/board.php", "https://www.gisuljob.co.kr/employ/search2.html",
+                    "https://jokyungjob.mycafe24.com/bbs/board.php", "https://api.bookjob.co.kr/api/v1/job-posting"):
+            career.check_url(url)
+        with self.assertRaises(RuntimeError):
+            career.check_url("https://other.mycafe24.com/")
+
+
 class RegistryTest(unittest.TestCase):
     def test_every_site_has_name_and_host(self):
         for key in career.SITES:

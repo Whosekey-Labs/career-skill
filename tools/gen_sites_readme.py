@@ -71,11 +71,18 @@ def build() -> str:
     out = ["## 지원 플랫폼", ""]
     out.append("### 스크립트로 바로 검색 (`career.py search --sites`)")
     out.append("")
-    out.append("| `--sites` 값 | 사이트 |")
-    out.append("|---|---|")
-    for key in career.SITES:
-        out.append(f"| `{key}` | {names.get(key, key)} |")
-    out.append("")
+    small = set(getattr(career, "GNU_SITES", {})) | set(getattr(career, "S2_SITES", {})) \
+        | set(getattr(career, "LINK_SITES", {})) | {"yoyangnara", "bookjob", "tchrm"}
+    groups = (("종합·공공·주요 사이트", [k for k in career.SITES if k not in small]),
+              ("직군 전문 사이트", [k for k in career.SITES if k in small]))
+    for gname, keys in groups:
+        out.append(f"**{gname}** ({len(keys)}곳)")
+        out.append("")
+        out.append("| `--sites` 값 | 사이트 — 강점 |")
+        out.append("|---|---|")
+        for key in keys:
+            out.append(f"| `{key}` | {names.get(key, key)} |")
+        out.append("")
     out.append("### 직군별 전문 사이트 (에이전트 브라우저로 열거나 링크로 확인)")
     out.append("")
     out.append("직군 파일마다 세부 직무·사람인 직무 코드·검색 주소가 더 자세히 있어요. 빠진 사이트는 오픈채팅방으로 알려 주세요.")

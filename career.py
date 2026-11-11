@@ -2,7 +2,7 @@
 """career.py — AI 에이전트용 취업·이직 도우미 스크립트 (파이썬 기본 기능만 사용).
 
 명령:
-  search  공고 검색 (사람인·잡코리아 등 50여 곳, `python3 career.py sites`로 목록). 결과를 마감순 짧은 마크다운으로 출력
+  search  공고 검색 (사람인·잡코리아와 직군 전문 사이트 등 100여 곳, `python3 career.py sites`로 목록). 결과를 마감순 짧은 마크다운으로 출력
   sites   검색할 수 있는 사이트 목록 (--sites 값 — 이름 — 강점)
   links   스크립트로 못 여는 사이트(캐치·링커리어 등)의 검색 링크 — 에이전트 브라우저로 연다
   job     공고 URL 하나의 본문을 텍스트로 출력
@@ -30,7 +30,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 REPO = "https://github.com/Whosekey-Labs/career-skill"
 # 일반 브라우저와 같은 값 하나만 쓴다 (바꿔 가며 속이지 않는다).
 USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -1549,6 +1549,270 @@ def dietitian(keyword: str, f: dict, limit: int) -> list[dict]:
     return _loc_filter(out, f)
 
 
+# ================================================================ 직군 전문 소형 사이트 (공통 엔진)
+# ---------------------------------------------------------------- 그누보드 "○○잡" 게시판 계열 (/bbs/board.php?bo_table=guin)
+# 키: (호스트, bo_table, 사이트 이름, 강점, 시험 키워드)
+GNU_SITES = {
+    "chiryosa": ("progangsajob.com", "guin", "치료사잡", "언어·놀이·미술·인지 치료사", "치료사"),
+    "angyeongsa": ("xn--289a119adld0yc.com", "guin", "안경사잡", "안경사·검안사", "안경사"),
+    "gangsa": ("mgangsa.com", "guin", "강사닷컴", "학원·과외 강사", "수학"),
+    "wonuemin": ("xn--939ao51a5pde6ftpb.com", "guin", "원어민강사닷컴", "원어민·외국어 강사", "영어"),
+    "artssam": ("artssam.com", "guin", "아트샘터", "미술·예체능 학원 강사", "미술"),
+    "yorisa": ("yoriyorijob.com", "guin", "요리사잡", "한식·양식·중식 조리사·주방장", "조리"),
+    "ilsik": ("xn--oy2b21kbybgxh58a.com", "guin", "일식조리사닷컴", "초밥·일식 조리사", "일식"),
+    "jebbang": ("xn--vb0b9ha655ovjk91aba684a.com", "guin", "제빵사잡", "제과제빵사·베이커리", "제빵"),
+    "bartender": ("xn--2e0b05i8piljm63l.com", "guin", "바텐더잡", "바텐더·소믈리에", "바텐더"),
+    "yeongyang": ("xn--2e0b187anrd1ms4d.com", "guin", "영양사잡", "영양사·단체급식 조리원", "영양사"),
+    "nailart": ("xn--2e0ba86z2v1avqcva581bqsx.com", "guin", "네일링크", "네일리스트·속눈썹·왁싱", "네일"),
+    "nailjob": ("xn--950bt73bgd.com", "guin", "네일잡", "네일샵·속눈썹·왁싱", "네일"),
+    "petgroom": ("xn--2e0bw5jdygkubu9w32a.com", "guin", "애견미용사잡", "애견미용사·동물병원 테크니션", "미용"),
+    "cosmetic": ("xn--2e0bz70c2dv14cx9b.com", "guin", "화장품구인", "뷰티컨설턴트·화장품 매장", "화장품"),
+    "travel": ("xn--vf4b86gkdr45a70j.com", "guin", "여행사잡", "여행사 OP·인바운드·가이드", "여행"),
+    "motel": ("xn--v52b80v2qh.com", "guin", "모텔잡", "모텔·중소 호텔 프런트·룸메이드", "모텔"),
+    "stagejob": ("xn--ob0bx78aszdszbs26a.com", "guin", "공연행사잡", "무대·조명·음향 스태프", "무대"),
+    "curator": ("xn--om2b25z4do96ac6a.com", "guin", "큐레이터잡", "학예사·큐레이터", "학예"),
+    "photo": ("xn--rv5bv6pnyb.com", "guin", "포토잡", "스냅·스튜디오 사진가", "촬영"),
+    "translate": ("xn--9g3b9h75unsa.com", "guin", "번역알바", "통번역", "번역"),
+    "musicjob": ("xn--3v4bo7br4awskn.com", "guin", "실용음악잡", "실용음악 레슨 강사", "강사"),
+    "sportsgangsa": ("xn--939am40bfnb9zirmjn4i.com", "guin", "스포츠강사잡", "스포츠·체육 강사", "강사"),
+    "gymjob": ("xn--zb0bm90c9kaq1o.com", "guin", "체육관잡", "헬스·태권도 체육관 지도자", "트레이너"),
+    "yogajob": ("yogajob.net", "guin", "요가잡", "요가 강사", "요가"),
+    "pilates": ("xn--939a69swmht3br3jg8pfrg.com", "guin", "필라테스강사잡", "필라테스 강사", "필라테스"),
+    "lawjob": ("www.xn--2e0ba292g29chuslhd.com", "guin", "법무잡", "법률사무소·법무사 사무원", "사무"),
+    "acjob": ("www.acjob.co.kr", "guin", "경리잡", "경리·회계 사무", "경리"),
+    "forklift": ("xn--o79aqqe93dx8bb8d.com", "guin", "지게차잡", "지게차 운전", "지게차"),
+    "welding": ("www.xn--ok0b319aqjdo2a6p.com", "guin", "용접잡", "용접·제관", "용접"),
+    "sigong": ("xn--ob0b982byld.com", "guin", "시공잡", "미장·타일·도배·목공 기능공", "도배"),
+    "motors": ("www.motorsjob.com", "guin", "모터스잡", "자동차 정비·판금·도장", "정비"),
+    "installer": ("xn--2e0ba00dq50ddra171ab4do0l.com", "guin", "설치기사잡", "에어컨·정수기·인터넷·CCTV 설치", "설치"),
+    "insurancejob": ("xn--2e0ba040jyhkvxcq4z.com", "guin", "보험영업잡", "보험설계사·GA", "보험"),
+    "landscape": ("jokyungjob.mycafe24.com", "guin", "조경잡", "조경·수목 관리", "조경"),
+    "sisuljob": ("sisuljob.kr", "job", "시설잡", "건물 시설관리·전기·기계 설비", "시설"),
+}
+
+_GNU_DATE_RE = re.compile(r"(20\d{2})[-./](\d{1,2})[-./](\d{1,2})|(?<!\d)(\d{2})[-./](\d{2})(?!\d)")
+
+
+def _gnu_date(text):
+    m = _GNU_DATE_RE.search(text)
+    if not m:
+        return None
+    if m.group(1):
+        return f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+    return f"{m.group(4)}/{m.group(5)}"
+
+
+def gnu_parse(page, host, bo_table, site, limit):
+    out, seen = [], set()
+    page = re.sub(r"</?(b|strong|span|font)\b[^>]*>", "", page)   # 검색어 강조 태그가 낱말을 쪼개지 않게
+    pat = re.compile(r"""<a[^>]*href=["']([^"']*bo_table=""" + re.escape(bo_table) + r"""&(?:amp;)?wr_id=(\d+)[^"']*)["'][^>]*>(.*?)</a>""", re.S)
+    for m in pat.finditer(page):
+        wid = m.group(2)
+        if wid in seen:
+            continue
+        # 같은 글의 링크들이 들어 있는 행(tr/li)을 찾는다
+        start = max(page.rfind("<tr", 0, m.start()), page.rfind("<li", 0, m.start()))
+        ends = [e for e in (page.find("</tr>", m.end()), page.find("</li>", m.end())) if e != -1]
+        end = min(ends) if ends else m.end() + 1500
+        row = page[start:end] if start != -1 else page[m.start():end]
+        links = [(strip_tags(t), a) for a, w, t in pat.findall(row) if w == wid]
+        texts = [t for t, a in links if t]
+        if not texts:
+            continue
+        com = re.search(r'class="com_name"[^>]*>(.*?)</a>', row, re.S)
+        cells = [strip_tags(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)]
+        company = strip_tags(com.group(1)) if com else None
+        if not company and len(cells) >= 3 and cells[1] and cells[1] not in texts:
+            company = cells[1]
+        title = max((t for t in texts if t != company), key=len, default=texts[0])
+        title = re.sub(r"\s*(NEW|N)\s*(-->)?\s*$", "", re.sub(r"\bNEW\s*-->\s*NEW\b", "", title)).strip()
+        if re.search(r"공지|notice", row[:300], re.I) and "구인" not in title:
+            continue
+        seen.add(wid)
+        if " NEW " in title:                        # 카드형(시설잡): "제목 NEW 회사 · 시 · 구"
+            title, _, rest = title.partition(" NEW ")
+            company = company or rest.split(" · ")[0].strip() or None
+        loc = next((c for c in cells if LOC_RE.search(c) and len(c) < 15 and c not in (title, company)), None)
+        posted = _gnu_date(" ".join(cells)) if cells else None
+        posted = posted or _gnu_date(strip_tags(row))
+        out.append(job(title=title, company=company, location=loc, postedDate=posted,
+                       url=f"https://{host}/bbs/board.php?bo_table={bo_table}&wr_id={wid}", site=site))
+        if len(out) >= limit:
+            break
+    return out
+
+
+def gnu_search(key, keyword, f, limit):
+    host, bo, site, _, _ = GNU_SITES[key]
+    qs = {"bo_table": bo}
+    if keyword:
+        qs.update(sfl="wr_subject", stx=keyword)
+    page = fetch(f"https://{host}/bbs/board.php?" + urllib.parse.urlencode(qs))
+    return gnu_parse(page, host, bo, site, limit)
+
+
+
+
+
+# ---------------------------------------------------------------- employ/search2.html 계열 (EUC-KR, 같은 엔진: 기술잡·카파인드잡·웰컴강사)
+S2_SITES = {
+    # 키: (호스트, 이름, 강점, 시험 키워드, 칸 번호 {마감·회사·제목·경력·지역})
+    "gisuljob": ("www.gisuljob.co.kr", "기술잡", "시설관리·전기·건설 기술직", "시설",
+                 {"dl": 0, "company": 1, "title": 2, "exp": 4, "loc": 5}),
+    "carfindjob": ("www.carfindjob.co.kr", "카파인드잡", "자동차 정비·판금·도장", "정비",
+                   {"company": 1, "title": 2, "emp": 4, "exp": 5, "loc": 6}),
+    "welcomegangsa": ("www.welcomegangsa.co.kr", "웰컴강사", "태권도·헬스·필라테스·수영 강사", "강사",
+                      {"title": 1, "emp": 3, "exp": 4, "loc": 5}),
+}
+
+
+def s2_search(key, keyword, f, limit):
+    host, site, _, _, col = S2_SITES[key]
+    page = fetch(f"https://{host}/employ/search2.html", encoding="cp949")
+    page = re.sub(r"<!--.*?-->", "", page, flags=re.S)
+    out, seen = [], set()
+    for m in re.finditer(r"guin_detail\.html\?no=(\d+)", page):
+        no = m.group(1)
+        if no in seen:
+            continue
+        k = page.rfind("<tr", 0, m.start())
+        j = page.find("</tr>", m.end())
+        row = page[k:j]
+        cells = [strip_tags(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)]
+        if len(cells) < 6:
+            continue
+        seen.add(no)
+        get = lambda name: cells[col[name]].strip() if name in col and col[name] < len(cells) else ""
+        company = get("company").strip("<> .").strip() or None
+        title, exp, loc = get("title").rstrip(". "), get("exp"), get("loc")
+        if keyword and not all(w in " ".join(cells) for w in keyword.split()):
+            continue
+        dl = re.search(r"(\d{1,2})월\s*(\d{1,2})일", get("dl"))
+        posted = _gnu_date(cells[-1])
+        out.append(job(title=title, company=company, experience=exp, location=loc, employmentType=get("emp"),
+                       deadline=dl and f"{int(dl.group(1)):02d}/{int(dl.group(2)):02d}", postedDate=posted,
+                       url=f"https://{host}/employ/guin_detail.html?no={no}", site=site))
+        if len(out) >= limit:
+            break
+    return out
+
+
+# ---------------------------------------------------------------- 공고 링크 목록형 사이트 (목록 1페이지에서 공고 링크를 모은다)
+_LINK_DATE_RE = re.compile(r"(20\d{2})[-./](\d{1,2})[-./](\d{1,2})")
+
+# 키: (목록 주소, 공고 링크 정규식(1번 묶음=번호), 상세 주소 틀, 이름, 강점, 시험 키워드, 인코딩)
+LINK_SITES = {
+    "hanbang": ("https://www.hanbang.co.kr/applicated/", r"/recruit/recruit_view\.php\?applicated_seq=(\d+)",
+                "https://www.hanbang.co.kr/recruit/recruit_view.php?applicated_seq={}", "한방잡", "한의원·한방병원 간호조무사·간호사", "간호", None),
+    "chigwajob": ("https://www.chigwajob.co.kr/applicated/", r"/recruit/recruit_view\.php\?applicated_seq=(\d+)",
+                  "https://www.chigwajob.co.kr/recruit/recruit_view.php?applicated_seq={}", "치과잡", "치과위생사·조무사·상담실장", "위생사", None),
+    "nursevillage": ("https://www.nursevillage.com/job/job-posting", r"/job/job-posting/(\d+)",
+                     "https://www.nursevillage.com/job/job-posting/{}", "널스빌리지", "간호사 공고 모음, 산업간호", "간호", None),
+    "isafety": ("https://isafety.co.kr/is/job", r"isafety\.co\.kr/is/job/(\d+)",
+                "https://isafety.co.kr/is/job/{}", "iSAFETY", "안전·보건관리자", "안전", None),
+    "secuin": ("https://www.secuin.co.kr/?pid=recruit_list", r"\?pid=recruit_view&(?:amp;)?bid=(\d+)",
+               "https://www.secuin.co.kr/?pid=recruit_view&bid={}", "씨큐인", "경비원·미화원", "경비", None),
+    "semoojob": ("https://www.semoojob.co.kr/jobs/list.asp?transfer=job_101", r"/jobs/recruit_view\.asp\?id=(\d+)",
+                 "https://www.semoojob.co.kr/jobs/recruit_view.asp?id={}", "세무잡", "세무사무소·회계 사무", "세무", None),
+    "fitjob": ("https://fitness.vqoo.net/job_pt_fulltime", r"/job_pt_fulltime/(\d+)",
+               "https://fitness.vqoo.net/job_pt_fulltime/{}", "핏잡", "헬스 트레이너", "트레이너", None),
+    "pilatesjob": ("https://classjob.vqoo.net/recruit_pilates", r"/recruit_pilates/(\d+)(?![/\d])",
+                   "https://classjob.vqoo.net/recruit_pilates/{}", "필라테스잡", "필라테스·요가 강사", "필라테스", None),
+    "counjob": ("https://counjob.co.kr/guin_list.php", r"guin_detail\.php\?num=(\d+)",
+                "https://counjob.co.kr/guin_detail.php?num={}", "카운잡", "심리상담사", "상담", None),
+}
+
+
+def link_search(key, keyword, f, limit):
+    url, rx, tmpl, site, _, _, enc = LINK_SITES[key]
+    page = fetch(url, encoding=enc)
+    page = re.sub(r"<!--.*?-->|<script.*?</script>|<style.*?</style>", "", page, flags=re.S)
+    out, seen = [], set()
+    pat = re.compile(r"<a[^>]*href=[\"'][^\"']*?" + rx + r"[^\"']*[\"'][^>]*>(.*?)</a>", re.S)
+    found = {}
+    for m in pat.finditer(page):
+        no, text = m.group(1), strip_tags(m.group(2))
+        found.setdefault(no, [m.start(), m.end(), []])[2].append(text)
+        found[no][1] = m.end()
+    for no, (a, b, texts) in found.items():
+        texts = [t for t in texts if t and not re.fullmatch(r"[\d\s.,:/-]+", t)]
+        if not texts:
+            continue
+        title = max(texts, key=len)
+        title = title if len(title) <= 90 else title[:90]
+        ctx = strip_tags(page[max(0, a - 400): b + 400])
+        if keyword and not all(w in " ".join(texts) + " " + strip_tags(page[a:b]) for w in keyword.split()):
+            continue
+        d = _LINK_DATE_RE.findall(strip_tags(page[a: b + 300]))
+        loc = LOC_RE.search(" ".join(texts))
+        out.append(job(title=title, postedDate="-".join(x.zfill(2) for x in d[0]) if d else None,
+                       url=tmpl.format(no), site=site))
+        if len(out) >= limit:
+            break
+    return out
+
+
+def yoyangnara(keyword, f, limit):
+    """요양나라: 행 전체가 onclick 링크인 표 (직종, 시설구분, 근무지역, 근무형태 …)"""
+    page = fetch("https://www.yoyangnara.com/recruitment")
+    out, seen = [], set()
+    for row in re.findall(r"<tr[^>]*>(.*?)</tr>", page, re.S):
+        m = re.search(r"yoyangnara\.com/recruitment/(\d+)\?page=1", row)
+        if not m or m.group(1) in seen:
+            continue
+        seen.add(m.group(1))
+        c = [strip_tags(x) for x in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)]
+        if len(c) < 3 or (keyword and not all(w in " ".join(c) for w in keyword.split())):
+            continue
+        d = _LINK_DATE_RE.findall(" ".join(c))
+        out.append(job(title=f"{c[0]} ({c[1]})", location=c[2], employmentType=c[3] if len(c) > 3 else None,
+                       postedDate="-".join(x.zfill(2) for x in d[0]) if d else None,
+                       url=f"https://www.yoyangnara.com/recruitment/{m.group(1)}", site="요양나라"))
+        if len(out) >= limit:
+            break
+    return out
+
+
+
+
+
+def bookjob(keyword, f, limit):
+    """북잡 (출판 편집·디자인·마케팅, 공개 JSON 최신 목록)"""
+    data = json.loads(fetch("https://api.bookjob.co.kr/api/v1/job-posting?order=LATEST&size=50", accept="application/json"))
+    out = []
+    for d in (data.get("data") or {}).get("jobPostings", []):
+        hay = " ".join(str(d.get(k) or "") for k in ("title", "location", "jobCategory")) + " " + strip_tags(d.get("text") or "")[:300]
+        if keyword and not all(w in hay for w in keyword.split()):
+            continue
+        lo, hi = d.get("experienceMin"), d.get("experienceMax")
+        out.append(job(title=d.get("title", ""), location=d.get("location"),
+                       experience=_years(lo, hi) if lo is not None else None,
+                       deadline=(d.get("closingDate") or "")[:10] or None, postedDate=(d.get("createdAt") or "")[:10],
+                       url=f"https://www.bookjob.co.kr/job/recruitment/post/{d['id']}", site="북잡"))
+        if len(out) >= limit:
+            break
+    return out
+
+
+def tchrm(keyword, f, limit):
+    """국외여행인솔자 인력관리시스템 채용 (한국여행업협회, 공개 JSON)"""
+    data = json.loads(fetch("https://tchrm.or.kr/api/board/recruit?" + urllib.parse.urlencode({"keyword": keyword or "", "page": 0}),
+                            accept="application/json"))
+    out = []
+    for d in (data.get("data") or {}).get("content", []):
+        title = d.get("title", "")
+        if keyword and not all(w in title for w in keyword.split()):
+            continue
+        dl = re.search(r"~\s*(20\d{2})\.(\d{1,2})\.(\d{1,2})", title)
+        out.append(job(title=title, company=re.match(r"\(?[^)\s]*\)?\S*", title).group(0) if title else None,
+                       postedDate=(d.get("createdDate") or "")[:10],
+                       deadline=f"{dl.group(1)}-{int(dl.group(2)):02d}-{int(dl.group(3)):02d}" if dl else None,
+                       url=f"https://tchrm.or.kr/board/recruit/{d['id']}", site="국외여행인솔자(여행업협회)"))
+        if len(out) >= limit:
+            break
+    return out
+
+
 def _kofia_url(href):
     seq = re.search(r"seq=(\d+)", html.unescape(href))
     return f"https://www.kofia.or.kr/brd/m_96/view.do?seq={seq.group(1)}" if seq else None
@@ -1611,6 +1875,31 @@ SITE_NAMES = {
     "hair99": "헤어99 — 헤어 디자이너·인턴", "haircouple": "헤어커플 — 헤어 디자이너·인턴",
     "dietitian": "영양사협회 — 영양사(단체급식·병원·학교)",
 }
+
+
+# ---------------------------------------------------------------- 직군 전문 소형 사이트 등록
+
+
+def _bind(fn, key):
+    return lambda keyword, f, limit: fn(key, keyword, f, limit)
+
+
+for _k, _v in GNU_SITES.items():
+    SITES[_k] = _bind(gnu_search, _k)
+    SITE_NAMES[_k] = f"{_v[2]} — {_v[3]}"
+for _k, _v in S2_SITES.items():
+    SITES[_k] = _bind(s2_search, _k)
+    SITE_NAMES[_k] = f"{_v[1]} — {_v[2]}"
+for _k, _v in LINK_SITES.items():
+    SITES[_k] = _bind(link_search, _k)
+    SITE_NAMES[_k] = f"{_v[3]} — {_v[4]}"
+SITES.update(yoyangnara=yoyangnara, bookjob=bookjob, tchrm=tchrm)
+SITE_NAMES.update(yoyangnara="요양나라 — 요양보호사·요양시설 직원", bookjob="북잡 — 출판 편집·디자인·마케팅",
+                  tchrm="국외여행인솔자(여행업협회) — 여행사 OP·인솔자·상품기획")
+ALLOWED_HOSTS = ALLOWED_HOSTS + tuple(v[0].removeprefix("www.") for v in GNU_SITES.values()) \
+    + tuple(v[0].removeprefix("www.") for v in S2_SITES.values()) \
+    + tuple(urllib.parse.urlparse(v[0]).netloc.removeprefix("www.") for v in LINK_SITES.values()) \
+    + ("yoyangnara.com", "bookjob.co.kr", "tchrm.or.kr")
 
 
 # ---------------------------------------------------------------- 정리 (만료·중복·정렬)
@@ -1686,7 +1975,7 @@ def render(jobs, today, header):
             n += 1
             meta = " · ".join(x for x in (j["experience"], j["salary"], j["location"], j["employmentType"],
                                          j["deadline"] and f'마감 {j["deadline"]}') if x)
-            lines.append(f'{n}. **{j["company"] or "회사명 없음"}** {j["title"]}')
+            lines.append(f'{n}. **{j["company"]}** {j["title"]}' if j["company"] else f'{n}. {j["title"]}')
             if meta:
                 lines.append(f"   - {meta}")
             lines.append(f'   - {j["site"]}: {j["url"]}')
