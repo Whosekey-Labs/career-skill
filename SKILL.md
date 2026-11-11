@@ -29,7 +29,7 @@ description: 한국 취업·이직 준비를 돕는 스킬. 맞춤 공고 찾기
 | 단계 | 할 일 | 열 파일 (BASE 뒤에 붙임) |
 |---|---|---|
 | 1 | 프로필 정리 (처음 한 번, 기억에 저장) | `guides/01-profile.md` |
-| 2 | 맞춤 공고 찾기 | `guides/02-find-jobs.md` (직군 키워드가 애매하면 `guides/industries.md`) |
+| 2 | 맞춤 공고 찾기 | `guides/02-find-jobs.md` (직군 키워드가 애매하면 `guides/jobs/index.md`를 열고, 해당 직군 파일 하나만 연다) |
 | 3 | 사용자가 고른 공고 1~2개만 회사 분석 + 요건 정리 | `guides/03-analyze.md` |
 | 4 | 자소서 초안 → 워드 파일 | `guides/04-cover-letter.md` |
 | 5 | (원하면) 매일 새 공고 알림 예약 | `guides/05-daily.md` |

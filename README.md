@@ -19,7 +19,7 @@ https://raw.githubusercontent.com/Whosekey-Labs/career-skill/main/SKILL.md 이 �
 | `SKILL.md` | 에이전트가 처음 읽는 파일 (순서와 규칙) |
 | `guides/01-profile.md` | 경력·강점 정리 |
 | `guides/02-find-jobs.md` | 공고 찾기 (스크립트 / 브라우저) |
-| `guides/industries.md` | 직군별 검색 키워드·사이트 |
+| `guides/jobs/index.md` | 직군 목차 (25개 직군 파일: 세부 직무·검색 키워드·사람인 코드·전문 사이트) |
 | `guides/03-analyze.md` | 회사 분석 + 공고 요건 정리 |
 | `guides/04-cover-letter.md` | 자소서 초안 → 워드 파일 |
 | `guides/05-daily.md` | 매일 새 공고 알림 |
