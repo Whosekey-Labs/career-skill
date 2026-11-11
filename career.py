@@ -6,7 +6,6 @@
           결과를 마감순 짧은 마크다운으로 출력
   links   스크립트로 못 여는 사이트(캐치·링커리어·고용24 등)의 검색 링크 — 에이전트 브라우저로 연다
   job     공고 URL 하나의 본문을 텍스트로 출력
-  docx    마크다운 파일을 워드(.docx)로 변환 (python-docx 있을 때)
 
 동작 원칙:
   - 본인 구직용 도구. 일반 브라우저 User-Agent 하나를 고정해서 쓴다.
@@ -31,7 +30,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 REPO = "https://github.com/Whosekey-Labs/career-skill"
 # 일반 브라우저와 같은 값 하나만 쓴다 (바꿔 가며 속이지 않는다).
 USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -629,7 +628,7 @@ def cmd_links(a):
 (로그인·보안 확인이 있거나 화면을 브라우저가 그려야 해서 스크립트로는 못 여는 곳이에요. 에이전트 브라우저로 열어 주세요.)
 - 캐치 (대기업·중견 신입 공채): https://www.catch.co.kr/NCS/RecruitSearch
 - 링커리어 (인턴·신입·대외활동): https://linkareer.com/list/recruit
-- 고용24 (중소기업·현장직·중장년): https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do?keyword={q}
+- 고용24 (중소기업·현장직·중장년): https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do?srcKeyword={q}
 - 로켓펀치 (스타트업·인턴): https://www.rocketpunch.com/jobs
 - 링크드인 (외국계·해외): https://www.linkedin.com/jobs/search?keywords={q}&location=South%20Korea
 - 직군별 전문 사이트는 guides/jobs/ 의 해당 직군 파일을 보세요.""")
@@ -678,32 +677,6 @@ def cmd_job(a):
     print(text[: a.max_chars] + ("\n…(뒤는 생략)" if len(text) > a.max_chars else ""))
 
 
-def cmd_docx(a):
-    try:
-        import docx  # python-docx
-    except ImportError:
-        print("python-docx가 없어요. 마크다운 파일을 그대로 전달하거나, 에이전트의 문서 만들기 기능을 쓰세요.")
-        sys.exit(1)
-    doc = docx.Document()
-    with open(a.input, encoding="utf-8") as fp:
-        for line in fp.read().splitlines():
-            s = line.rstrip()
-            if not s or s.strip() == "---":
-                continue
-            h = re.match(r"^(#{1,4})\s+(.*)", s)
-            if h:
-                doc.add_heading(h.group(2), level=min(len(h.group(1)), 3))
-                continue
-            li = re.match(r"^\s*(?:[-*]|\d+\.)\s+(.*)", s)
-            p = doc.add_paragraph(style="List Bullet" if li else None)
-            for i, part in enumerate(re.split(r"\*\*(.+?)\*\*", li.group(1) if li else s)):
-                if part:
-                    p.add_run(part).bold = bool(i % 2)
-    out = a.output or os.path.splitext(a.input)[0] + ".docx"
-    doc.save(out)
-    print(out)
-
-
 def main():
     ap = argparse.ArgumentParser(description="AI 에이전트용 취업·이직 도우미")
     ap.add_argument("--version", action="version", version=VERSION)
@@ -733,11 +706,6 @@ def main():
     j.add_argument("--url", required=True)
     j.add_argument("--max-chars", type=int, default=6000)
     j.set_defaults(fn=cmd_job)
-
-    d = sub.add_parser("docx", help="마크다운 → 워드")
-    d.add_argument("--input", "-i", required=True)
-    d.add_argument("--output", "-o")
-    d.set_defaults(fn=cmd_docx)
 
     a = ap.parse_args()
     try:

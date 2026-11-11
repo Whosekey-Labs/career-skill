@@ -1,6 +1,6 @@
 # 취업·이직 비서 스킬 (career-skill)
 
-AI 에이전트에게 링크 하나만 주면 **맞춤 공고 찾기 → 회사 분석 → 자소서 초안(내 구글 문서, 안 되면 워드) → 매일 새 공고 알림**까지 해 주는 지침서예요. 피클, 뮤즈, ChatGPT, Codex, Claude 등 어떤 에이전트든 쓸 수 있어요.
+AI 에이전트에게 링크 하나만 주면 **맞춤 공고 찾기 → 회사 분석 → 자소서 초안(내 구글 문서) → 매일 새 공고 알림**까지 해 주는 지침서예요. 피클, 뮤즈, ChatGPT, Codex, Claude 등 어떤 에이전트든 쓸 수 있어요.
 
 ## 사용법 (피클 기준)
 
@@ -21,7 +21,7 @@ https://raw.githubusercontent.com/Whosekey-Labs/career-skill/main/SKILL.md 이 �
 | `guides/02-find-jobs.md` | 공고 찾기 (스크립트 / 브라우저) |
 | `guides/jobs/index.md` | 직군 목차 (25개 직군 파일: 세부 직무·검색 키워드·사람인 코드·전문 사이트) |
 | `guides/03-analyze.md` | 회사 분석 + 공고 요건 정리 |
-| `guides/04-cover-letter.md` | 자소서 초안 → 내 구글 문서 (구글 연결 안내, 안 되면 워드) |
+| `guides/04-cover-letter.md` | 자소서 초안 → 내 구글 문서 (구글 계정 연결 안내) |
 | `guides/05-daily.md` | 매일 새 공고 알림 |
 | `guides/fix-phrases.md` | 결과를 고쳐 달라는 말 예시 |
 | `career.py` | 파이썬 기본 기능만 쓰는 검색 도우미 (설치 필요 없음) |
@@ -43,7 +43,6 @@ python3 career.py search -k "퍼포먼스 마케터" --location 서울 --experie
 python3 career.py search -k "부동산 PF,자산운용" --sites saramin,jobkorea,kofia
 python3 career.py links -k "간호사"
 python3 career.py job --url "공고 링크"
-python3 career.py docx -i 자소서.md      # python-docx 필요
 python3 -m unittest discover tests      # 테스트
 ```
 
