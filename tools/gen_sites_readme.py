@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""README의 '지원 플랫폼' 부분을 직군 파일(guides/jobs/*.md)과 career.py에서 다시 만든다.
+"""지원 플랫폼 목록을 직군 파일(guides/jobs/*.md)과 career.py에서 다시 만든다.
 
-사용: python3 tools/gen_sites_readme.py   (README.md의 <!-- sites:start --> ~ <!-- sites:end --> 사이를 바꾼다)
-직군 파일이나 career.py의 지원 사이트를 바꾸면 이걸 다시 돌린다.
+- SITES.md: 전체 목록을 통째로 새로 쓴다.
+- README.md: <!-- sites:start --> ~ <!-- sites:end --> 사이에 요약만 넣는다.
+사용: python3 tools/gen_sites_readme.py
+직군 파일이나 career.py의 SITES·SITE_NAMES를 바꾸면 이걸 다시 돌린다.
 """
 
 import pathlib
@@ -33,7 +35,8 @@ def short(desc: str) -> str:
 
 def parse_job_file(path: pathlib.Path):
     text = path.read_text(encoding="utf-8")
-    title = re.search(r"^#\s+(.*)", text, re.M).group(1).strip()
+    m = re.search(r"^#\s+(.*)", text, re.M)
+    title = m.group(1).strip() if m else path.stem
     sec = text.split("## 어디서 찾나", 1)[-1].split("## 검색 예시", 1)[0]
     script_line, sites = "", []
     for line in sec.splitlines():
@@ -66,15 +69,20 @@ def parse_job_file(path: pathlib.Path):
     return title, script_line, sites
 
 
-def build() -> str:
+SUMMARY: list = []
+
+
+def build():
     names = {k: v for k, v in getattr(career, "SITE_NAMES", {}).items()}
-    out = ["## 지원 플랫폼", ""]
+    out = ["# 지원 플랫폼 전체 목록", "", "이 파일은 `python3 tools/gen_sites_readme.py`가 직군 파일과 career.py에서 자동으로 만들어요. 손으로 고치지 마세요.", ""]
     out.append("### 스크립트로 바로 검색 (`career.py search --sites`)")
     out.append("")
-    small = set(getattr(career, "GNU_SITES", {})) | set(getattr(career, "S2_SITES", {})) \
-        | set(getattr(career, "LINK_SITES", {})) | {"yoyangnara", "bookjob", "tchrm"}
-    groups = (("종합·공공·주요 사이트", [k for k in career.SITES if k not in small]),
-              ("직군 전문 사이트", [k for k in career.SITES if k in small]))
+    keys = list(career.SITES)
+    engine = set(getattr(career, "GNU_SITES", {})) | set(getattr(career, "S2_SITES", {})) \
+        | set(getattr(career, "LINK_SITES", {}))
+    # career.py는 주요 사이트를 먼저, 직군 전문 사이트를 공통 엔진 등록부터 뒤에 등록한다.
+    cut = min((keys.index(k) for k in engine), default=len(keys))
+    groups = (("종합·공공·주요 사이트", keys[:cut]), ("직군 전문 사이트", keys[cut:]))
     for gname, keys in groups:
         out.append(f"**{gname}** ({len(keys)}곳)")
         out.append("")
@@ -103,21 +111,35 @@ def build() -> str:
             link = f"[{name}]({url})" if url else name
             out.append(f"- {link}" + (f" — {desc}" if desc else ""))
         out.append(f"- 자세히: [`guides/jobs/{path.name}`](guides/jobs/{urllib.parse.quote(path.name)})")
+        SUMMARY.append((title, [n for n, _, _ in sites][:4], path.name))
         out.append("")
-    out.insert(1, f"\n스크립트 검색 {len(career.SITES)}곳 + 직군별 전문 사이트·협회·공공·앱 {total}곳(직군 간 중복 포함).\n")
-    return "\n".join(out).rstrip() + "\n"
+    out.insert(4, f"스크립트 검색 {len(career.SITES)}곳 + 직군별 전문 사이트·협회·공공·앱 {total}곳(직군 간 중복 포함).\n")
+    return "\n".join(out).rstrip() + "\n", total
+
+
+def readme_summary(total: int) -> str:
+    keys = list(career.SITES)
+    out = ["## 지원 플랫폼", "",
+           f"- 스크립트로 바로 검색: **{len(keys)}곳** (사람인·잡코리아·원티드·리멤버·자소설닷컴·고용24·잡알리오 등 + 간호·제빵·건설·미용 등 직군 전문 사이트)",
+           f"- 직군 25개마다 전문 사이트·협회·공공·앱 안내: **{total}곳** (직군 간 중복 포함)",
+           "- 전체 목록: [SITES.md](SITES.md)", "",
+           "| 직군 | 대표 전문 사이트 (일부) |", "|---|---|"]
+    for title, names, fname in SUMMARY:
+        out.append(f"| [{title}](guides/jobs/{urllib.parse.quote(fname)}) | {', '.join(names) or '-'} |")
+    return "\n".join(out) + "\n"
 
 
 def main():
+    full, total = build()
+    (ROOT / "SITES.md").write_text(full, encoding="utf-8")
     readme = ROOT / "README.md"
     text = readme.read_text(encoding="utf-8")
-    block = "<!-- sites:start -->\n" + build() + "<!-- sites:end -->"
-    if "<!-- sites:start -->" in text:
-        text = re.sub(r"<!-- sites:start -->.*?<!-- sites:end -->", lambda _: block, text, flags=re.S)
-    else:
+    block = "<!-- sites:start -->\n" + readme_summary(total) + "<!-- sites:end -->"
+    if "<!-- sites:start -->" not in text:
         raise SystemExit("README.md에 <!-- sites:start --> / <!-- sites:end --> 표시가 없어요.")
+    text = re.sub(r"<!-- sites:start -->.*?<!-- sites:end -->", lambda _: block, text, flags=re.S)
     readme.write_text(text, encoding="utf-8")
-    print("README 지원 플랫폼 갱신 완료")
+    print(f"SITES.md·README 요약 갱신 완료 (스크립트 {len(career.SITES)}곳, 직군별 {total}곳)")
 
 
 if __name__ == "__main__":

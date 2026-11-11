@@ -124,7 +124,7 @@ class SmallSiteParserTest(unittest.TestCase):
 
 
 class RegistryTest(unittest.TestCase):
-    def test_every_site_has_name_and_host(self):
+    def test_every_site_has_name(self):
         for key in career.SITES:
             self.assertIn(key, career.SITE_NAMES)
 
@@ -132,6 +132,114 @@ class RegistryTest(unittest.TestCase):
 class CountTest(unittest.TestCase):
     def test_count_chars(self):
         self.assertEqual(career.count_chars("가나 다\n라"), (6, 4))
+
+
+class DeadlineMoreTest(unittest.TestCase):
+    def test_past_dates_are_returned(self):
+        self.assertEqual(career.parse_deadline("10/20", TODAY), dt.date(2026, 10, 20))
+        self.assertEqual(career.parse_deadline("~ 10.25(토)", TODAY), dt.date(2026, 10, 25))
+
+    def test_two_digit_year_and_compact(self):
+        self.assertEqual(career.parse_deadline("26.11.20", TODAY), dt.date(2026, 11, 20))
+        self.assertEqual(career.parse_deadline("20261130", TODAY), dt.date(2026, 11, 30))
+        self.assertEqual(career.parse_deadline(20261130, TODAY), dt.date(2026, 11, 30))
+
+    def test_range_takes_last(self):
+        self.assertEqual(career.parse_deadline("2026-11-01 ~ 2026-11-30", TODAY), dt.date(2026, 11, 30))
+        self.assertEqual(career.parse_deadline("11/05 ~ 11/20", TODAY), dt.date(2026, 11, 20))
+
+    def test_nearest_year(self):
+        self.assertEqual(career.parse_deadline("12/28", dt.date(2027, 1, 5)), dt.date(2026, 12, 28))
+        self.assertEqual(career.parse_deadline("01/05", dt.date(2026, 12, 20)), dt.date(2027, 1, 5))
+
+    def test_tidy_reads_title_deadline_and_drops_past(self):
+        jobs = [career.job(title="[A운용] 리츠 운용역 채용 (~11/9)", company="A운용", url="p", site="금투협"),
+                career.job(title="[B운용] PF 심사역 (~11/16)", company="B운용", url="q", site="금투협"),
+                career.job(title="C 공고", company="C", deadline="10/20", url="r", site="사람인")]
+        out = career.tidy(jobs, TODAY)
+        self.assertEqual([j["url"] for j in out], ["q"])
+        self.assertEqual(out[0]["_d"], dt.date(2026, 11, 16))
+
+    def test_non_string_values(self):
+        j = career.job(title="t", deadline=20261130, experience=3, url="x", site="s")
+        self.assertEqual(j["experience"], "3")
+        career.render(career.tidy([j], TODAY), TODAY, "h")
+
+    def test_dedupe_without_company_uses_url(self):
+        jobs = [career.job(title="간호조무사 구인", url="u1", site="X"), career.job(title="간호조무사 구인", url="u2", site="X")]
+        self.assertEqual(len(career.tidy(jobs, TODAY)), 2)
+
+
+class SelectionTest(unittest.TestCase):
+    def test_each_site_kept(self):
+        jobs = [career.job(title=f"s{i}", company=f"c{i}", deadline="2026-11-20", url=f"s{i}", site="사람인") for i in range(20)]
+        jobs += [career.job(title=f"k{i}", company=f"k{i}", url=f"k{i}", site="금투협") for i in range(3)]
+        out = career.pick_balanced(career.tidy(jobs, TODAY), 15)
+        self.assertEqual(len(out), 15)
+        self.assertEqual(sum(1 for j in out if j["site"] == "금투협"), 2)
+
+
+class NewOnlyTest(unittest.TestCase):
+    def test_record_only_shown(self):
+        import tempfile
+        d = tempfile.mkdtemp()
+        old = career.DATA_DIR
+        career.DATA_DIR = d
+        try:
+            jobs = [career.job(title=f"t{i}", url=f"u{i}", site="s") for i in range(10)]
+            new = career.filter_new(jobs)
+            career.record_seen(new[:3])
+            self.assertEqual(len(career.filter_new(jobs)), 7)
+        finally:
+            career.DATA_DIR = old
+
+
+class LocationTest(unittest.TestCase):
+    def test_subregion(self):
+        spec = career.loc_spec("판교")
+        self.assertEqual(spec[0], "경기")
+        self.assertTrue(career.loc_keep({"location": "경기 성남시 분당구"}, spec))
+        self.assertFalse(career.loc_keep({"location": "경기 수원시"}, spec))
+        self.assertFalse(career.loc_keep({"location": "서울 강남구"}, spec))
+        self.assertIsNone(career.loc_keep({"location": ""}, spec))
+
+    def test_sido(self):
+        spec = career.loc_spec("부산")
+        self.assertTrue(career.loc_keep({"location": "부산 해운대구"}, spec))
+        self.assertFalse(career.loc_keep({"location": "경기 성남"}, spec))
+        self.assertTrue(career.loc_keep({"location": "부산광역시 부산진구"}, spec))
+        self.assertIsNone(career.loc_spec("어딘가"))
+        self.assertFalse(career.title_loc_keep("[강남구청역] 피부과 간호조무사", spec))
+        self.assertTrue(career.title_loc_keep("해운대 피부과 간호조무사", spec))
+        self.assertIsNone(career.title_loc_keep("피부과 간호조무사", spec))
+
+
+class CountBlankTest(unittest.TestCase):
+    def test_blanks_not_counted(self):
+        self.assertEqual(career.count_chars("가나[직접 입력: 숫자]다 [추정]"), (3, 3))
+
+
+class UrlScopeTest(unittest.TestCase):
+    def test_company_hosts_separated(self):
+        with self.assertRaises(RuntimeError):
+            career.check_url("https://web.archive.org/web/2024/https://evil.com/", resolve=False)
+        with self.assertRaises(RuntimeError):
+            career.check_url("https://bizno.net/?query=x", resolve=False)
+        career.check_url("https://bizno.net/?query=x", career.COMPANY_HOSTS, resolve=False)
+
+    def test_private_ip_rejected(self):
+        orig = career.socket.getaddrinfo
+        career.socket.getaddrinfo = lambda *a, **k: [(2, 1, 6, "", ("127.0.0.1", 0))]
+        try:
+            with self.assertRaises(RuntimeError):
+                career.check_url("https://www.saramin.co.kr/")
+        finally:
+            career.socket.getaddrinfo = orig
+        career.socket.getaddrinfo = lambda *a, **k: [(2, 1, 6, "", ("198.18.0.5", 0))]   # 프록시 가짜 IP는 허용
+        try:
+            career.check_url("https://www.saramin.co.kr/")
+        finally:
+            career.socket.getaddrinfo = orig
 
 
 if __name__ == "__main__":

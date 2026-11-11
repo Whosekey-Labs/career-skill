@@ -7,4 +7,4 @@
 - 금융·부동산 직군은 원래 잘 동작하던 영역이다. 직군을 추가할 때 빼거나 약하게 만들지 않는다.
 - 자소서·분석은 프로필·공고·검색 근거에 없는 내용을 지어내지 않는다. 빈 숫자는 `[직접 입력: …]`.
 - 사람용 글은 한국어, 짧은 문장. 코드 주석도 한국어.
-- README의 "지원 플랫폼" 부분은 손으로 고치지 않는다. 직군 파일이나 career.py의 SITES·SITE_NAMES를 바꾼 뒤 `python3 tools/gen_sites_readme.py`로 다시 만든다.
+- `SITES.md`와 README의 "지원 플랫폼" 요약은 손으로 고치지 않는다. 직군 파일이나 career.py의 SITES·SITE_NAMES를 바꾼 뒤 `python3 tools/gen_sites_readme.py`로 다시 만든다.
