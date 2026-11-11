@@ -4,7 +4,13 @@
 
 - 요청 + 프로필에서 키워드 2~4개를 뽑는다. 직군별 키워드·사이트는 `industries.md` 참고(애매할 때만 연다).
 - 조건: 지역, 경력(신입/경력/경력무관), 연봉 하한(만원), 고용형태. 말하지 않은 조건은 넣지 않는다.
-- 사이트: 기본은 사람인+잡코리아. 금융·증권·자산운용·부동산 금융이면 금투협(kofia)을 더한다. 경력직이면 리멤버, 대기업 공채·신입이면 자소설닷컴, 공공기관이면 잡알리오 링크를 함께 준다.
+- 사이트 고르기 (`--sites`, 최대 4개):
+  - 기본: `saramin,jobkorea`
+  - IT·기획·디자인·마케팅: `+wanted` / 개발자: `+jumpit`
+  - 경력직·헤드헌팅: `+remember`
+  - 대기업·공기업 신입 공채: `+jasoseol`
+  - 금융·증권·운용: `+kofia` / 리츠·부동산 운용·개발: `+kareit,kofia`
+  - 공공기관: `alio` / 공무원 임기제·경력경쟁·공무직: `gojobs` / 해외: `worldjob`
 
 ## 2) 실행
 
@@ -13,17 +19,18 @@
 ```bash
 python3 career.py search -k "퍼포먼스 마케터,그로스 마케터" --location 서울 --experience 경력 --max 15
 python3 career.py search -k "부동산 PF,자산운용" --sites saramin,jobkorea,kofia --experience 경력
-python3 career.py links -k "퍼포먼스 마케터"     # 리멤버·자소설닷컴·잡알리오 등 직접 볼 링크
+python3 career.py search -k "백엔드" --sites saramin,wanted,jumpit,remember --experience 경력
+python3 career.py links -k "퍼포먼스 마케터"     # 브라우저로 볼 사이트 링크 (캐치·링커리어·고용24 등)
 ```
 
-- 한 번 실행에 요청은 8번까지다(키워드 수 × 사이트 수 ≤ 8).
+- 한 번 실행에 요청은 12번까지다(키워드 수 × 사이트 수 ≤ 12).
 - 결과 목록은 **그대로** 보여 준다. 다시 요약하거나 표로 바꾸지 않는다.
 - 결과가 3건 미만이면 키워드를 넓히거나(예: "퍼포먼스 마케터" → "마케팅") 조건을 하나 빼고 한 번만 다시 한다.
 - 오류가 나면 그 사이트만 브라우저 모드로 한다.
 
-### 브라우저 모드 (스크립트가 안 될 때, 또는 아래 사이트)
+### 브라우저 (스크립트가 안 될 때, 스크립트가 지원하지 않는 사이트)
 
-사람처럼 검색 결과 1~2페이지만 보고 공고 10~15개를 고른다.
+검색 결과 1~2페이지를 보고 공고 10~15개를 고른다. 스크립트 결과와 합쳐서 같은 형식으로 보여 준다.
 
 - 사람인: `https://www.saramin.co.kr/zf_user/search?searchType=search&searchword={키워드}` (지역 서울 `&loc_mcd=101000`, 경기 `102000` / 경력 `&exp_cd=2`, 신입 `1`)
 - 잡코리아: `https://www.jobkorea.co.kr/Search/?stext={키워드}&tabType=recruit`

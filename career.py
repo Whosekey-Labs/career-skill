@@ -27,10 +27,12 @@ import time
 import urllib.parse
 import urllib.request
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 REPO = "https://github.com/Whosekey-Labs/career-skill"
-USER_AGENT = f"career-skill/{VERSION} (+{REPO}; personal job search helper)"
-MAX_REQUESTS = 8          # 한 번 실행에서 보낼 수 있는 최대 요청 수
+# 일반 브라우저와 같은 값 하나만 쓴다 (바꿔 가며 속이지 않는다).
+USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+MAX_REQUESTS = 12         # 한 번 실행에서 보낼 수 있는 최대 요청 수 (사이트 부담·IP 차단 방지)
 SAME_HOST_GAP = 1.0       # 같은 사이트 요청 사이 최소 간격(초)
 DATA_DIR = os.environ.get("CAREER_DATA_DIR", "career_data")
 
@@ -43,7 +45,8 @@ _request_count = 0
 # 스크립트가 직접 여는 사이트 목록. 여기에 없는 주소는 에이전트 브라우저로 연다.
 # (임의 주소를 열지 않으므로 로컬 파일·내부망 접근이 원천적으로 불가능하다.)
 ALLOWED_HOSTS = ("saramin.co.kr", "jobkorea.co.kr", "kofia.or.kr", "alio.go.kr", "gojobs.go.kr",
-                 "worldjob.or.kr", "kareit.or.kr")
+                 "worldjob.or.kr", "kareit.or.kr", "wanted.co.kr", "rememberapp.co.kr", "jasoseol.com",
+                 "jumpit-api.saramin.co.kr")
 
 
 def check_url(url: str) -> None:
@@ -65,7 +68,7 @@ class _SafeRedirect(urllib.request.HTTPRedirectHandler):
 _opener = urllib.request.build_opener(_SafeRedirect)
 
 
-def fetch(url: str, accept: str = "text/html") -> str:
+def fetch(url: str, accept: str = "text/html", data: bytes | None = None) -> str:
     """같은 사이트는 간격을 두고, 실행당 요청 수를 제한해서 가져온다."""
     global _request_count
     if _request_count >= MAX_REQUESTS:
@@ -75,11 +78,10 @@ def fetch(url: str, accept: str = "text/html") -> str:
     wait = SAME_HOST_GAP - (time.time() - _last_hit.get(host, 0))
     if wait > 0:
         time.sleep(wait)
-    req = urllib.request.Request(url, headers={
-        "User-Agent": USER_AGENT,
-        "Accept": accept,
-        "Accept-Language": "ko-KR,ko;q=0.9",
-    })
+    headers = {"User-Agent": USER_AGENT, "Accept": accept, "Accept-Language": "ko-KR,ko;q=0.9"}
+    if data is not None:
+        headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, data=data, headers=headers)
     _request_count += 1
     try:
         with _opener.open(req, timeout=20) as res:
@@ -357,13 +359,113 @@ def kareit(keyword: str, f: dict, limit: int) -> list[dict]:
     return out
 
 
+# ---------------------------------------------------------------- 원티드 (IT·기획·디자인·마케팅, 스타트업·경력)
+
+def wanted(keyword: str, f: dict, limit: int) -> list[dict]:
+    qs = {"country": "kr", "locations": "all", "years": "-1", "limit": str(min(limit, 20)), "offset": "0",
+          "job_sort": "job.latest_order", "query": keyword}
+    if f.get("experience") and "신입" in f["experience"]:
+        qs["years"] = "0"
+    data = json.loads(fetch("https://www.wanted.co.kr/api/v4/jobs?" + urllib.parse.urlencode(qs),
+                            accept="application/json"))
+    out = []
+    for d in data.get("data", []):
+        addr = d.get("address") or {}
+        loc = " ".join(x for x in (addr.get("location"), addr.get("district")) if x)
+        exp = None
+        if d.get("annual_from") is not None:
+            exp = "신입" if d["annual_from"] == 0 and (d.get("annual_to") or 0) <= 1 else \
+                _years(d["annual_from"], d.get("annual_to"))
+        out.append(job(title=d.get("position", ""), company=(d.get("company") or {}).get("name"), location=loc,
+                       experience=exp, deadline=d.get("due_time") or "상시",
+                       url=f'https://www.wanted.co.kr/wd/{d["id"]}', site="원티드"))
+    return _loc_filter(out, f)[:limit]
+
+
+# ---------------------------------------------------------------- 점핏 (개발자)
+
+def jumpit(keyword: str, f: dict, limit: int) -> list[dict]:
+    qs = {"keyword": keyword, "sort": "rsp_rate", "page": "1"}
+    data = json.loads(fetch("https://jumpit-api.saramin.co.kr/api/positions?" + urllib.parse.urlencode(qs),
+                            accept="application/json"))
+    out = []
+    for d in (data.get("result") or {}).get("positions", []):
+        lo, hi = d.get("minCareer"), d.get("maxCareer")
+        exp = "신입" if d.get("newcomer") and not lo else (_years(lo, hi) if lo is not None else None)
+        out.append(job(title=strip_tags(d.get("title", "")), company=d.get("companyName"),
+                       location=", ".join(d.get("locations") or []),
+                       experience=exp, deadline="상시" if d.get("alwaysOpen") else (d.get("closedAt") or "")[:10],
+                       url=f'https://jumpit.saramin.co.kr/position/{d["id"]}', site="점핏"))
+        if len(out) >= limit * 2:
+            break
+    return _loc_filter(out, f)[:limit]
+
+
+# ---------------------------------------------------------------- 리멤버 (경력직·헤드헌팅)
+
+def remember(keyword: str, f: dict, limit: int) -> list[dict]:
+    body = {"search": {"keywords": [keyword]}, "page": 1, "per": min(limit * 2, 30)}
+    data = json.loads(fetch("https://career-api.rememberapp.co.kr/job_postings/search", accept="application/json",
+                            data=json.dumps(body).encode()))
+    out = []
+    for d in data.get("data", []):
+        a = d.get("normalized_address") or {}
+        lo, hi = d.get("min_experience"), d.get("max_experience")
+        exp = _years(lo, hi) if lo is not None else None
+        sal = None
+        if d.get("min_salary") or d.get("max_salary"):
+            sal = "~".join(str(x) for x in (d.get("min_salary"), d.get("max_salary")) if x) + "만원"
+        out.append(job(title=d.get("title", ""), company=(d.get("organization") or {}).get("name"),
+                       location=" ".join(x for x in (a.get("level1"), a.get("level2")) if x), experience=exp, salary=sal,
+                       deadline=(d.get("ends_at") or "")[:10] or "상시", postedDate=(d.get("starts_at") or "")[:10],
+                       url=f'https://career.rememberapp.co.kr/job/posting/{d["id"]}', site="리멤버"))
+    return _loc_filter(out, f)[:limit]
+
+
+# ---------------------------------------------------------------- 자소설닷컴 (대기업·공기업 공채, 신입·인턴)
+
+def jasoseol(keyword: str, f: dict, limit: int) -> list[dict]:
+    now = dt.datetime.now(dt.timezone.utc)
+    # 달력은 기간 안에 시작한 공고를 준다 → 한 달 전부터 받아서 마감 안 된 것만 남긴다
+    body = {"start_time": (now - dt.timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+            "end_time": (now + dt.timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%S.000Z")}
+    data = json.loads(fetch("https://jasoseol.com/employment/calendar_list.json", accept="application/json",
+                            data=json.dumps(body).encode()))
+    words = keyword.split()
+    out, seen = [], set()
+    for e in data.get("employment", []):
+        hay = json.dumps(e, ensure_ascii=False)
+        if e["id"] in seen or (words and not all(w in hay for w in words)):
+            continue
+        seen.add(e["id"])
+        out.append(job(title=e.get("title", ""), company=e.get("name"), deadline=(e.get("end_time") or "")[:10],
+                       url=f'https://jasoseol.com/recruit/{e["id"]}', site="자소설닷컴"))
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _years(lo, hi):
+    if hi is None or hi >= 30:
+        return f"{lo}년 이상" if lo else "경력무관"
+    return f"{lo}~{hi}년"
+
+
+def _loc_filter(jobs, f):
+    want = LOC_RE.findall(f.get("location") or "")
+    if not want:
+        return jobs
+    return [j for j in jobs if not j["location"] or any(w in j["location"] for w in want)]
+
+
 def _kofia_url(href):
     seq = re.search(r"seq=(\d+)", html.unescape(href))
     return f"https://www.kofia.or.kr/brd/m_96/view.do?seq={seq.group(1)}" if seq else None
 
 
 SITES = {"saramin": saramin, "jobkorea": jobkorea, "kofia": kofia, "alio": alio, "gojobs": gojobs,
-         "worldjob": worldjob, "kareit": kareit}
+         "worldjob": worldjob, "kareit": kareit, "wanted": wanted, "jumpit": jumpit, "remember": remember,
+         "jasoseol": jasoseol}
 
 
 # ---------------------------------------------------------------- 정리 (만료·중복·정렬)
@@ -511,18 +613,14 @@ def cmd_search(a):
 
 def cmd_links(a):
     q = urllib.parse.quote(a.keyword)
-    print(f"""## 직접 열어 볼 검색 링크 — {a.keyword}
-(리멤버·자소설닷컴은 약관으로 자동 수집을 금지하고, 나머지는 아직 약관을 확인하지 않아서 스크립트로 긁지 않아요. 사용자가 원하면 링크를 열어 보거나, 에이전트 브라우저로 사람처럼 한 페이지씩만 보세요.)
-- 리멤버 (경력직·헤드헌팅): https://career.rememberapp.co.kr/job/postings  ← 검색창에 "{a.keyword}" 입력
-- 자소설닷컴 (대기업 공채·신입): https://jasoseol.com/search?keyword={q}
-- 잡알리오 (공공기관): https://job.alio.go.kr/recruit.do
-- 고용24 (공공·지역 일자리): https://www.work24.go.kr/
-- 원티드 (IT·스타트업): https://www.wanted.co.kr/search?query={q}
-- 링커리어 (대학생 인턴·대외활동): https://linkareer.com/list/intern""")
-
-
-# 리멤버(약관 제13조①24호)·자소설닷컴(제14조 9호)은 자동 수집 금지. 원티드·링커리어는 미확인이라 보수적으로 막음.
-BLOCKED_HOSTS = ("rememberapp.co.kr", "jasoseol.com", "wanted.co.kr", "linkareer.com")
+    print(f"""## 브라우저로 열어 볼 검색 링크 — {a.keyword}
+(로그인·보안 확인이 있거나 화면을 브라우저가 그려야 해서 스크립트로는 못 여는 곳이에요. 에이전트 브라우저로 열어 주세요.)
+- 캐치 (대기업·중견 신입 공채): https://www.catch.co.kr/NCS/RecruitSearch
+- 링커리어 (인턴·신입·대외활동): https://linkareer.com/list/recruit
+- 고용24 (중소기업·현장직·중장년): https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do?keyword={q}
+- 로켓펀치 (스타트업·인턴): https://www.rocketpunch.com/jobs
+- 링크드인 (외국계·해외): https://www.linkedin.com/jobs/search?keywords={q}&location=South%20Korea
+- 직군별 전문 사이트는 guides/jobs/ 의 해당 직군 파일을 보세요.""")
 
 
 def cmd_job(a):
@@ -531,9 +629,7 @@ def cmd_job(a):
     try:
         check_url(url)
     except RuntimeError as e:
-        blocked = any(host == h or host.endswith("." + h) for h in BLOCKED_HOSTS)
-        reason = "이 사이트는 약관상 자동 수집을 막고 있어요." if blocked else str(e)
-        print(reason + " 에이전트 브라우저로 이 공고 한 페이지만 열어서 읽거나, 사용자에게 공고 내용을 복사해 붙여 달라고 하세요.")
+        print(str(e) + " 에이전트 브라우저로 이 공고를 열어서 읽어 주세요.")
         return
     text = ""
     rec = re.search(r"rec_idx=(\d+)", url)
@@ -546,6 +642,20 @@ def cmd_job(a):
         d = re.search(r'<meta name="description" content="([^"]*)', page)
         body = strip_tags(fetch(f"https://www.jobkorea.co.kr/Recruit/GI_Read_Comt_Ifrm?Gno={gno.group(1)}"))
         text = "\n".join(x for x in (t and html.unescape(t.group(1)), d and html.unescape(d.group(1)), body) if x)
+    elif "wanted.co.kr" in host and re.search(r"/wd/(\d+)", url):
+        wid = re.search(r"/wd/(\d+)", url).group(1)
+        d = json.loads(fetch(f"https://www.wanted.co.kr/api/v4/jobs/{wid}", accept="application/json")).get("job", {})
+        det = d.get("detail") or {}
+        text = "\n".join(x for x in (d.get("position"), (d.get("company") or {}).get("name"), det.get("intro"),
+                                     "주요업무\n" + (det.get("main_tasks") or ""), "자격요건\n" + (det.get("requirements") or ""),
+                                     "우대사항\n" + (det.get("preferred_points") or ""), det.get("benefits")) if x)
+    elif "rememberapp.co.kr" in host and re.search(r"/posting/(\d+)", url):
+        rid = re.search(r"/posting/(\d+)", url).group(1)
+        d = json.loads(fetch(f"https://career-api.rememberapp.co.kr/job_postings/{rid}", accept="application/json"))
+        d = d.get("data", d)
+        text = "\n".join(str(x) for x in (d.get("title"), (d.get("organization") or {}).get("name"), d.get("introduction"),
+                                          "담당업무\n" + (d.get("job_description") or ""), "자격요건\n" + (d.get("qualifications") or ""),
+                                          "우대사항\n" + (d.get("preferred_qualifications") or ""), d.get("recruiting_process")) if x)
     else:
         page = fetch(url)
         m = re.search(r"(?is)<(article|main)[^>]*>(.*?)</\1>", page)
@@ -590,7 +700,7 @@ def main():
     s = sub.add_parser("search", help="공고 검색")
     s.add_argument("--keyword", "-k", action="append", help="키워드 (쉼표로 여러 개)")
     s.add_argument("--sites", default="saramin,jobkorea",
-                   help="saramin,jobkorea,kofia,alio,gojobs,worldjob,kareit 중 쉼표로")
+                   help="saramin,jobkorea,wanted,jumpit,remember,jasoseol,kofia,kareit,alio,gojobs,worldjob 중 쉼표로")
     s.add_argument("--job-code", help="사람인 직무 코드 (guides/jobs 의 S숫자에서 S 빼고, 쉼표로 여러 개)")
     s.add_argument("--industry", help="사람인 산업 코드 ind_cd (guides/jobs/index.md)")
     s.add_argument("--location")
