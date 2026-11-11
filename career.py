@@ -21,6 +21,7 @@ import datetime as dt
 import html
 import json
 import os
+import random
 import re
 import sys
 import time
@@ -33,7 +34,8 @@ REPO = "https://github.com/Whosekey-Labs/career-skill"
 USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 MAX_REQUESTS = 12         # 한 번 실행에서 보낼 수 있는 최대 요청 수 (사이트 부담·IP 차단 방지)
-SAME_HOST_GAP = 1.0       # 같은 사이트 요청 사이 최소 간격(초)
+SAME_HOST_GAP = 1.0       # 같은 사이트 요청 사이 기본 간격(초)
+GAP_JITTER = 0.8          # 여기에 0~0.8초 랜덤을 더한다 (일정한 간격은 기계처럼 보인다)
 DATA_DIR = os.environ.get("CAREER_DATA_DIR", "career_data")
 
 _last_hit: dict[str, float] = {}
@@ -75,7 +77,7 @@ def fetch(url: str, accept: str = "text/html", data: bytes | None = None) -> str
         raise RuntimeError(f"한 번 실행에 요청은 {MAX_REQUESTS}번까지예요. 키워드를 줄여 주세요.")
     check_url(url)
     host = urllib.parse.urlparse(url).netloc
-    wait = SAME_HOST_GAP - (time.time() - _last_hit.get(host, 0))
+    wait = SAME_HOST_GAP + random.uniform(0, GAP_JITTER) - (time.time() - _last_hit.get(host, 0))
     if wait > 0:
         time.sleep(wait)
     headers = {"User-Agent": USER_AGENT, "Accept": accept, "Accept-Language": "ko-KR,ko;q=0.9"}
