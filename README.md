@@ -615,6 +615,8 @@ python3 career.py search -k "퍼포먼스 마케터" --location 서울 --experie
 python3 career.py search -k "부동산 PF,자산운용" --sites saramin,jobkorea,kofia
 python3 career.py links -k "간호사"
 python3 career.py job --url "공고 링크"
+python3 career.py company -n "회사명" --place "회사명 지역"   # 사업자·종업원·영업 상태·매출·위치
+python3 career.py wayback 회사도메인.com                   # 홈페이지 과거 버전
 python3 career.py count -i 자소서.md      # 문항별 글자 수 (공백 포함·제외)
 python3 -m unittest discover tests      # 테스트
 ```

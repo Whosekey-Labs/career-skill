@@ -6,6 +6,8 @@
   sites   검색할 수 있는 사이트 목록 (--sites 값 — 이름 — 강점)
   links   스크립트로 못 여는 사이트(캐치·링커리어 등)의 검색 링크 — 에이전트 브라우저로 연다
   job     공고 URL 하나의 본문을 텍스트로 출력
+  company 회사 조회 (사업자·대표·종업원·영업 상태·지점, 매출·영업이익, 근무지 위치)
+  wayback 회사 홈페이지 과거 버전 목록
   count   자소서 글자 수 세기 (문항 제목 단위, 공백 포함·제외, 제한 대비 %)
 
 동작 원칙:
@@ -1900,7 +1902,8 @@ SITE_NAMES.update(yoyangnara="요양나라 — 요양보호사·요양시설 직
 ALLOWED_HOSTS = ALLOWED_HOSTS + tuple(v[0].removeprefix("www.") for v in GNU_SITES.values()) \
     + tuple(v[0].removeprefix("www.") for v in S2_SITES.values()) \
     + tuple(urllib.parse.urlparse(v[0]).netloc.removeprefix("www.") for v in LINK_SITES.values()) \
-    + ("yoyangnara.com", "bookjob.co.kr", "tchrm.or.kr")
+    + ("yoyangnara.com", "bookjob.co.kr", "tchrm.or.kr") \
+    + ("bizno.net", "catch.co.kr", "search.map.kakao.com", "web.archive.org")   # 회사 조회용
 
 
 # ---------------------------------------------------------------- 정리 (만료·중복·정렬)
@@ -2029,6 +2032,9 @@ def cmd_search(a):
             except Exception as e:  # 한 사이트가 실패해도 나머지는 계속
                 errors.append(f"{s}/{kw}: {e}")
     jobs = tidy(found, today)
+    if getattr(a, "company", None):
+        want = norm_company(a.company)
+        jobs = [j for j in jobs if want and want in norm_company(j["company"])]
     if a.new_only:
         jobs = filter_new(jobs)
     jobs = jobs[: a.max]
@@ -2190,6 +2196,128 @@ def count_chars(text: str) -> tuple[int, int]:
     return len(body), len(re.sub(r"\s", "", body))
 
 
+# ---------------------------------------------------------------- 회사 조회 (사업자·재무·위치·홈페이지 과거)
+
+def _lines(page: str) -> list[str]:
+    t = re.sub(r"(?is)<(script|style|noscript)[^>]*>.*?</\1>", " ", page)
+    t = html.unescape(re.sub(r"(?s)<[^>]+>", "\n", t))
+    return [l.strip() for l in t.split("\n") if l.strip()]
+
+
+_BIZ_KEYS = ["대표자명", "사업자 현재 상태", "사업자등록번호", "법인등록번호", "종업원수", "회사주소",
+             "등록일", "법인형태", "업종"]
+
+
+def bizno_search(q: str) -> list[tuple[str, str]]:
+    page = fetch("https://bizno.net/?query=" + urllib.parse.quote(q))
+    cut = page.find("실시간 조회기업")          # 그 아래는 다른 회사 목록(노이즈)
+    page = page[:cut] if cut > 0 else page
+    out, seen = [], set()
+    for m in re.finditer(r'<a[^>]+href="/article/(\d+)"[^>]*>(.*?)</a>', page, re.S):
+        name = " ".join(strip_tags(m.group(2)).split())
+        if name and m.group(1) not in seen:
+            seen.add(m.group(1))
+            out.append((m.group(1), name))
+    return out[:6]
+
+
+def bizno_detail(no: str) -> dict:
+    L = _lines(fetch(f"https://bizno.net/article/{no}"))
+    out = {}
+    for k in _BIZ_KEYS:
+        if k in L:
+            i = L.index(k)
+            v = " ".join(L[i + 1:i + 3]) if k == "회사주소" else (L[i + 1] if i + 1 < len(L) else "")
+            if v and not v.startswith("※") and v not in _BIZ_KEYS:
+                out[k] = v
+    return out
+
+
+def catch_finance(name: str) -> dict:
+    page = fetch("https://www.catch.co.kr/Search/SearchList?Keyword=" + urllib.parse.quote(name))
+    code = re.search(r"CompInfo/([0-9A-Za-z]+)", page)
+    if not code:
+        return {}
+    url = f"https://www.catch.co.kr/Comp/CompInfo/{code.group(1)}"
+    L = _lines(fetch(url))
+    out = {"출처": url}
+    for k in ("매출액", "영업이익", "당기순이익", "사원수", "설립일", "기업형태"):
+        for i, l in enumerate(L):
+            if l.startswith(k):
+                vals = [x for x in L[i + 1:i + 5] if re.search(r"\d", x) and "기준" not in x]
+                basis = next((x for x in L[i:i + 4] if "기준" in x), "")
+                if vals:
+                    out[k] = vals[0] + (f" ({re.search(r'[0-9.]+ 기준', basis).group(0)})"
+                                        if re.search(r"[0-9.]+ 기준", basis) else "")
+                break
+    return out
+
+
+def kakao_place(q: str) -> list[str]:
+    url = "https://search.map.kakao.com/mapsearch/map.daum?q=" + urllib.parse.quote(q) + "&msFlag=A&sort=0"
+    d = json.loads(fetch(url, accept="application/json", headers={"Referer": "https://map.kakao.com/"}))
+    return [" | ".join(str(x) for x in (p.get("name"), p.get("new_address") or p.get("address"),
+                                         p.get("last_cate_name")) if x) for p in (d.get("place") or [])[:3]]
+
+
+def cmd_company(a):
+    name = a.name.strip()
+    print(f"## 회사 조회 — {name}\n(확인 시각 {dt.datetime.now():%Y-%m-%d %H:%M})")
+    errors = []
+    try:
+        cands = bizno_search(name)
+    except Exception as e:
+        cands, _ = [], errors.append(f"사업자 조회: {e}")
+    if cands:
+        print("\n### 사업자 (bizno.net) — 같은 이름이 여럿이면 공고의 주소·대표와 맞는 것을 고르세요")
+        for no, nm in cands:
+            print(f"- {nm} · 사업자번호 {no}")
+        pick = a.bizno or cands[0][0]
+        try:
+            d = bizno_detail(re.sub(r"\D", "", pick))
+            print(f"\n상세 ({pick}, https://bizno.net/article/{pick}):")
+            for k, v in d.items():
+                print(f"- {k}: {v}")
+        except Exception as e:
+            errors.append(f"사업자 상세: {e}")
+    try:
+        fin = catch_finance(name)
+        if len(fin) > 1:
+            print("\n### 재무·규모 (캐치, NICE 기준)")
+            for k, v in fin.items():
+                print(f"- {k}: {v}")
+    except Exception as e:
+        errors.append(f"재무: {e}")
+    if a.place:
+        try:
+            places = kakao_place(a.place)
+            if places:
+                print(f"\n### 근무지 위치 (카카오맵, 검색어 \"{a.place}\")")
+                for p in places:
+                    print(f"- {p}")
+        except Exception as e:
+            errors.append(f"위치: {e}")
+    print("\n### 더 볼 곳 (에이전트 브라우저)")
+    q = urllib.parse.quote(name)
+    print(f"- 크레딧잡(국민연금 기준 인원·평균 연봉·입사/퇴사율): https://kreditjob.com/ 에서 \"{name}\" 검색")
+    print(f"- 잡플래닛(리뷰·연봉·면접): https://www.jobplanet.co.kr/search?query={q}")
+    print(f"- 블라인드(현직자 이야기): https://www.teamblind.com/kr/search/{q}")
+    print(f"- DART(상장·외감 회사 사업보고서): https://dart.fss.or.kr/dsab007/main.do?textCrpNm={q}")
+    print(f"- 구인 이력: python3 career.py search -k \"{name}\" --sites saramin,jobkorea,work24 --company \"{name}\"")
+    if errors:
+        print("\n(일부 실패: " + " / ".join(errors) + ")")
+
+
+def cmd_wayback(a):
+    dom = re.sub(r"^https?://", "", a.domain).strip("/")
+    d = json.loads(fetch("https://web.archive.org/cdx/search/cdx?url=" + urllib.parse.quote(dom)
+                         + "&output=json&fl=timestamp,statuscode&collapse=timestamp:6", accept="application/json"))
+    rows = d[1:] if d else []
+    print(f"## 홈페이지 과거 버전 — {dom} ({len(rows)}개월분)")
+    for ts, code in rows[-12:]:
+        print(f"- {ts[:4]}-{ts[4:6]} https://web.archive.org/web/{ts}/{dom}")
+
+
 def cmd_count(a):
     text = open(a.input, encoding="utf-8").read() if a.input else sys.stdin.read()
     # "## 1. 지원 동기 (… / 제한 600자)" 같은 제목 단위로 나눠 센다. 제목이 없으면 전체를 센다.
@@ -2240,6 +2368,7 @@ def main():
     s.add_argument("--max", type=int, default=15, help="최종 출력 최대")
     s.add_argument("--new-only", action="store_true", help="이전에 보여준 공고 빼기")
     s.add_argument("--json", action="store_true")
+    s.add_argument("--company", help="이 회사 공고만 남기기 (구인 이력 확인용)")
     s.set_defaults(fn=cmd_search)
 
     t = sub.add_parser("sites", help="검색할 수 있는 사이트 목록")
@@ -2253,6 +2382,16 @@ def main():
     j.add_argument("--url", required=True)
     j.add_argument("--max-chars", type=int, default=6000)
     j.set_defaults(fn=cmd_job)
+
+    co = sub.add_parser("company", help="회사 조회: 사업자(대표·종업원·상태·지점), 재무(매출·영업이익), 위치")
+    co.add_argument("--name", "-n", required=True, help="회사명")
+    co.add_argument("--bizno", help="사업자번호 (같은 이름이 여럿일 때 골라서)")
+    co.add_argument("--place", help="근무지 위치 검색어 (예: '신지모루 송파')")
+    co.set_defaults(fn=cmd_company)
+
+    w = sub.add_parser("wayback", help="회사 홈페이지 과거 버전 목록 (웹 아카이브)")
+    w.add_argument("domain")
+    w.set_defaults(fn=cmd_wayback)
 
     c = sub.add_parser("count", help="자소서 글자 수 세기 (문항 제목 단위, 공백 포함·제외)")
     c.add_argument("--input", "-i", help="마크다운 파일 (없으면 표준 입력)")
