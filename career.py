@@ -27,7 +27,7 @@ import time
 import urllib.parse
 import urllib.request
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 REPO = "https://github.com/Whosekey-Labs/career-skill"
 USER_AGENT = f"career-skill/{VERSION} (+{REPO}; personal job search helper)"
 MAX_REQUESTS = 8          # 한 번 실행에서 보낼 수 있는 최대 요청 수
@@ -42,7 +42,8 @@ _request_count = 0
 
 # 스크립트가 직접 여는 사이트 목록. 여기에 없는 주소는 에이전트 브라우저로 연다.
 # (임의 주소를 열지 않으므로 로컬 파일·내부망 접근이 원천적으로 불가능하다.)
-ALLOWED_HOSTS = ("saramin.co.kr", "jobkorea.co.kr", "kofia.or.kr")
+ALLOWED_HOSTS = ("saramin.co.kr", "jobkorea.co.kr", "kofia.or.kr", "alio.go.kr", "gojobs.go.kr",
+                 "worldjob.or.kr", "kareit.or.kr")
 
 
 def check_url(url: str) -> None:
@@ -52,7 +53,7 @@ def check_url(url: str) -> None:
     if u.scheme not in ("http", "https") or not netloc or re.search(r"[^a-z0-9.\-]", netloc):
         raise RuntimeError("공고 주소 형식이 아니에요.")
     if not any(netloc == h or netloc.endswith("." + h) for h in ALLOWED_HOSTS):
-        raise RuntimeError("스크립트는 사람인·잡코리아·금투협 주소만 열어요.")
+        raise RuntimeError("스크립트가 여는 사이트가 아니에요.")
 
 
 class _SafeRedirect(urllib.request.HTTPRedirectHandler):
@@ -99,7 +100,11 @@ def strip_tags(s: str) -> str:
 def job(**kw) -> dict:
     base = dict(title="", company=None, location=None, experience=None, salary=None,
                 deadline=None, url=None, employmentType=None, postedDate=None, site=None)
-    base.update({k: v for k, v in kw.items() if v not in ("", None)})
+    for k, v in kw.items():
+        if isinstance(v, str):
+            v = " ".join(v.split())     # 줄바꿈·연속 공백 정리
+        if v not in ("", None):
+            base[k] = v
     return base
 
 
@@ -121,8 +126,13 @@ EMP_RE = re.compile(r"정규직|계약직|인턴|파견|프리랜서|아르바�
 
 
 def saramin(keyword: str, f: dict, limit: int) -> list[dict]:
-    qs = {"searchType": "search", "searchword": keyword, "recruitPageCount": "40",
-          "recruitSort": "relation"}
+    qs = {"recruitPageCount": "40", "recruitSort": "relation"}
+    if keyword:
+        qs.update(searchType="search", searchword=keyword)
+    if f.get("jobCode"):      # 사람인 직무 코드 (guides/jobs/*.md 의 S숫자, 쉼표로 여러 개 = OR)
+        qs["cat_kewd"] = f["jobCode"]
+    if f.get("industry"):     # 사람인 산업 코드 (ind_cd)
+        qs["ind_cd"] = f["industry"]
     if f.get("location"):
         for name, code in SARAMIN_LOC.items():
             if name in f["location"]:
@@ -144,7 +154,7 @@ def saramin(keyword: str, f: dict, limit: int) -> list[dict]:
             if name in f["empType"]:
                 qs["job_type"] = code
                 break
-    page = fetch("https://www.saramin.co.kr/zf_user/search?" + urllib.parse.urlencode(qs))
+    page = fetch("https://www.saramin.co.kr/zf_user/search/recruit?" + urllib.parse.urlencode(qs))
     out = []
     for block in page.split('class="item_recruit"')[1:]:
         m = re.search(r'class="job_tit">\s*<a[^>]*href="([^"]+)"[^>]*title="([^"]*)"', block) or \
@@ -255,12 +265,105 @@ def kofia(keyword: str, f: dict, limit: int) -> list[dict]:
     return out
 
 
+# ---------------------------------------------------------------- 잡알리오 (공공기관)
+# 공공데이터법에 따라 자유 이용 (job.alio.go.kr/right.do)
+
+def alio(keyword: str, f: dict, limit: int) -> list[dict]:
+    qs = {"pageNo": "1", "ing": "2", "search_type": "title", "keyword": keyword}
+    page = fetch("https://job.alio.go.kr/recruit.do?" + urllib.parse.urlencode(qs))
+    out = []
+    for row in re.findall(r"<tr[^>]*>(.*?)</tr>", page, re.S):
+        m = re.search(r'href="/recruitview\.do\?idx=(\d+)"[^>]*>(.*?)</a>', row, re.S)
+        if not m:
+            continue
+        cells = [strip_tags(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)]
+        # 칸 순서: 선택, 번호, 제목, 기관, 지역, 고용형태, 등록일, 마감일
+        tail = cells[3:] + [None] * 5
+        dl = tail[4] and re.sub(r"^(\d{2})\.", r"20\1.", tail[4].split()[0])
+        out.append(job(title=strip_tags(m.group(2)), company=tail[0], location=tail[1],
+                       employmentType=tail[2], postedDate=tail[3], deadline=dl,
+                       url=f"https://job.alio.go.kr/recruitview.do?idx={m.group(1)}", site="잡알리오"))
+        if len(out) >= limit:
+            break
+    return out
+
+
+# ---------------------------------------------------------------- 나라일터 (공무원 임기제·경력경쟁·공무직)
+
+def gojobs(keyword: str, f: dict, limit: int) -> list[dict]:
+    qs = {"menuNo": "401", "mngrMenuYn": "N", "searchKeyword": keyword, "pageIndex": "1"}
+    page = fetch("https://www.gojobs.go.kr/apmList.do?" + urllib.parse.urlencode(qs))
+    body = page.split("<tbody>", 1)[-1]
+    out = []
+    for row in re.findall(r"<tr[^>]*>(.*?)</tr>", body, re.S):
+        m = re.search(r"fn_apmView\('\d+',\s*'(\d+)'\)\"[^>]*>(.*?)</a>", row, re.S)
+        if not m:
+            continue
+        cells = [strip_tags(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)]
+        out.append(job(title=strip_tags(m.group(2)), company=cells[2] if len(cells) > 2 else None,
+                       postedDate=cells[3] if len(cells) > 3 else None,
+                       deadline=cells[4] if len(cells) > 4 else None,
+                       url=f"https://www.gojobs.go.kr/apmView.do?empmnsn={m.group(1)}&menuNo=401", site="나라일터"))
+        if len(out) >= limit:
+            break
+    return out
+
+
+# ---------------------------------------------------------------- 월드잡플러스 (해외 취업, 공식 공개 API)
+
+def worldjob(keyword: str, f: dict, limit: int) -> list[dict]:
+    xml = fetch("https://www.worldjob.or.kr/openapi/openapi.do?dobType=1&pageIndex=1&showItemListCount=100",
+                accept="application/xml")
+    out = []
+    for item in re.findall(r"<ITEM>(.*?)</ITEM>", xml, re.S):
+        def tag(name):
+            m = re.search(rf"<{name}>(.*?)</{name}>", item, re.S)
+            return m and strip_tags(re.sub(r"<!\[CDATA\[(.*?)\]\]>", r"\1", m.group(1), flags=re.S))
+        title, country, kind = tag("rctntcSj") or "", tag("dsptcNationScd") or "", tag("dsptcKsco") or ""
+        hay = " ".join((title, country, kind, tag("entNm") or ""))
+        if keyword and not all(w in hay for w in keyword.split()):
+            continue
+        link = html.unescape(tag("linkUrl") or "")
+        link = re.sub(r"&rtnIp=[^&]*", "", link)   # API가 호출자 IP를 링크에 넣으므로 지운다
+        out.append(job(title=title, company=tag("entNm"), location=country, experience=tag("joDemandCareerStleScd"),
+                       employmentType=tag("joEmplymStleScd"), deadline=tag("rctntcEndDe"),
+                       postedDate=tag("rctntcBgnDe"), url=link or None, site="월드잡"))
+        if len(out) >= limit:
+            break
+    return out
+
+
+# ---------------------------------------------------------------- 한국리츠협회 회원사 채용 (리츠·부동산 운용·개발)
+# 약관 제8조②2호: 사전승낙 없는 복제·제3자 제공 금지 → 개인 열람용으로만, 결과 재배포 금지
+
+def kareit(keyword: str, f: dict, limit: int) -> list[dict]:
+    page = fetch("https://www.kareit.or.kr/community/page4.php")
+    out = []
+    for row in re.findall(r"<tr[^>]*>(.*?)</tr>", page, re.S):
+        m = re.search(r'href="(/community/page4\.php\?boardid=jobsm&mode=view&idx=(\d+))[^"]*"[^>]*title="([^"]*)"', row)
+        if not m:
+            continue
+        cells = [strip_tags(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)]
+        title = html.unescape(m.group(3)).replace("﻿", "").strip()
+        if keyword and not any(w in title for w in keyword.split()):
+            continue
+        dl = re.search(r"~\s*(\d{1,2}/\d{1,2})", title)
+        out.append(job(title=title, company=cells[2] if len(cells) > 2 else None,
+                       postedDate=cells[3] if len(cells) > 3 else None, deadline=dl and dl.group(1),
+                       url=f"https://www.kareit.or.kr/community/page4.php?boardid=jobsm&mode=view&idx={m.group(2)}",
+                       site="리츠협회"))
+        if len(out) >= limit:
+            break
+    return out
+
+
 def _kofia_url(href):
     seq = re.search(r"seq=(\d+)", html.unescape(href))
     return f"https://www.kofia.or.kr/brd/m_96/view.do?seq={seq.group(1)}" if seq else None
 
 
-SITES = {"saramin": saramin, "jobkorea": jobkorea, "kofia": kofia}
+SITES = {"saramin": saramin, "jobkorea": jobkorea, "kofia": kofia, "alio": alio, "gojobs": gojobs,
+         "worldjob": worldjob, "kareit": kareit}
 
 
 # ---------------------------------------------------------------- 정리 (만료·중복·정렬)
@@ -368,12 +471,19 @@ def filter_new(jobs):
 
 def cmd_search(a):
     today = dt.date.today()
-    keywords = [k.strip() for k in ",".join(a.keyword).split(",") if k.strip()]
+    keywords = [k.strip() for k in ",".join(a.keyword or []).split(",") if k.strip()]
+    if not keywords and not (a.job_code or a.industry):
+        raise RuntimeError("--keyword 또는 --job-code 가 필요해요.")
     sites = [s.strip() for s in a.sites.split(",") if s.strip()]
-    f = {"location": a.location, "experience": a.experience, "salary": a.salary, "empType": a.emp_type}
+    f = {"location": a.location, "experience": a.experience, "salary": a.salary, "empType": a.emp_type,
+         "jobCode": a.job_code, "industry": a.industry}
+    if not keywords and (a.job_code or a.industry):
+        keywords = [""]          # 사람인 코드만으로 검색
     found, errors = [], []
     for kw in keywords:
         for s in sites:
+            if not kw and s != "saramin":
+                continue             # 코드 검색은 사람인만 지원
             if s not in SITES:
                 errors.append(f"{s}: 지원하지 않는 사이트 (가능: {', '.join(SITES)}) — 다른 사이트는 links 명령 사용")
                 continue
@@ -391,7 +501,8 @@ def cmd_search(a):
         print(json.dumps({"jobs": jobs, "errors": errors}, ensure_ascii=False))
         return
     cond = " · ".join(x for x in (a.location, a.experience, a.salary and f"{a.salary}만원 이상", a.emp_type) if x)
-    head = f"## 공고 {len(jobs)}건 — {', '.join(keywords)}" + (f" ({cond})" if cond else "") + \
+    label = ", ".join(k for k in keywords if k) or f"사람인 직무코드 {a.job_code or ''} {a.industry or ''}".strip()
+    head = f"## 공고 {len(jobs)}건 — {label}" + (f" ({cond})" if cond else "") + \
         (" · 새 공고만" if a.new_only else "")
     print(render(jobs, today, head))
     if errors:
@@ -477,8 +588,11 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("search", help="공고 검색")
-    s.add_argument("--keyword", "-k", action="append", required=True, help="키워드 (쉼표로 여러 개)")
-    s.add_argument("--sites", default="saramin,jobkorea", help="saramin,jobkorea,kofia 중 쉼표로")
+    s.add_argument("--keyword", "-k", action="append", help="키워드 (쉼표로 여러 개)")
+    s.add_argument("--sites", default="saramin,jobkorea",
+                   help="saramin,jobkorea,kofia,alio,gojobs,worldjob,kareit 중 쉼표로")
+    s.add_argument("--job-code", help="사람인 직무 코드 (guides/jobs 의 S숫자에서 S 빼고, 쉼표로 여러 개)")
+    s.add_argument("--industry", help="사람인 산업 코드 ind_cd (guides/jobs/index.md)")
     s.add_argument("--location")
     s.add_argument("--experience", help="신입 / 경력 / 경력무관")
     s.add_argument("--salary", help="최소 연봉(만원), 사람인만 적용")
