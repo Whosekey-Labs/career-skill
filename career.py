@@ -19,11 +19,9 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import html
-import ipaddress
 import json
 import os
 import re
-import socket
 import sys
 import time
 import urllib.parse
@@ -42,19 +40,19 @@ _request_count = 0
 
 # ---------------------------------------------------------------- 공통 HTTP
 
+# 스크립트가 직접 여는 사이트 목록. 여기에 없는 주소는 에이전트 브라우저로 연다.
+# (임의 주소를 열지 않으므로 로컬 파일·내부망 접근이 원천적으로 불가능하다.)
+ALLOWED_HOSTS = ("saramin.co.kr", "jobkorea.co.kr", "kofia.or.kr")
+
+
 def check_url(url: str) -> None:
-    """http/https만, 내부망·로컬 주소는 거부한다 (로컬 파일 읽기·내부망 접근 방지)."""
+    """https/http + 허용된 채용 사이트 호스트만 통과시킨다."""
     u = urllib.parse.urlparse(url)
-    if u.scheme not in ("http", "https") or not u.hostname:
-        raise RuntimeError("http/https 공고 주소만 열 수 있어요.")
-    try:
-        infos = socket.getaddrinfo(u.hostname, None)
-    except socket.gaierror as e:
-        raise RuntimeError(f"주소를 찾을 수 없어요: {u.hostname}") from e
-    for info in infos:
-        ip = ipaddress.ip_address(info[4][0])
-        if not ip.is_global:
-            raise RuntimeError("내부망·로컬 주소는 열 수 없어요.")
+    netloc = u.netloc.lower()
+    if u.scheme not in ("http", "https") or not netloc or re.search(r"[^a-z0-9.\-]", netloc):
+        raise RuntimeError("공고 주소 형식이 아니에요.")
+    if not any(netloc == h or netloc.endswith("." + h) for h in ALLOWED_HOSTS):
+        raise RuntimeError("스크립트는 사람인·잡코리아·금투협 주소만 열어요. 이 주소는 에이전트 브라우저로 열어 주세요.")
 
 
 class _SafeRedirect(urllib.request.HTTPRedirectHandler):
@@ -418,10 +416,13 @@ BLOCKED_HOSTS = ("rememberapp.co.kr", "jasoseol.com", "wanted.co.kr", "linkareer
 
 def cmd_job(a):
     url = a.url.strip()
-    host = urllib.parse.urlparse(url).netloc
-    if any(h in host for h in BLOCKED_HOSTS):
-        print("이 사이트는 약관상 자동 수집을 막고 있어요. 에이전트 브라우저로 이 공고 한 페이지만 열어서 읽거나, "
-              "사용자에게 공고 내용을 복사해 붙여 달라고 하세요.")
+    host = urllib.parse.urlparse(url).netloc.lower()
+    try:
+        check_url(url)
+    except RuntimeError as e:
+        blocked = any(host == h or host.endswith("." + h) for h in BLOCKED_HOSTS)
+        reason = "이 사이트는 약관상 자동 수집을 막고 있어요." if blocked else str(e)
+        print(reason + " 에이전트 브라우저로 이 공고 한 페이지만 열어서 읽거나, 사용자에게 공고 내용을 복사해 붙여 달라고 하세요.")
         return
     text = ""
     rec = re.search(r"rec_idx=(\d+)", url)

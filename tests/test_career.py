@@ -36,9 +36,15 @@ class TidyTest(unittest.TestCase):
 
 class UrlCheckTest(unittest.TestCase):
     def test_rejects_unsafe(self):
-        for bad in ("file:///etc/passwd", "http://127.0.0.1/", "http://169.254.169.254/latest", "ftp://x.com/"):
+        for bad in ("file:///etc/passwd", "http://127.0.0.1/", "http://169.254.169.254/latest", "ftp://x.com/",
+                    "https://evil.com/", "https://saramin.co.kr.evil.com/", "https://www.saramin.co.kr%2e@127.0.0.1/",
+                    "https://user@www.saramin.co.kr/"):
             with self.assertRaises(RuntimeError):
                 career.check_url(bad)
+
+    def test_allows_job_sites(self):
+        career.check_url("https://www.saramin.co.kr/zf_user/search")
+        career.check_url("https://www.kofia.or.kr/brd/m_96/list.do")
 
 
 if __name__ == "__main__":
