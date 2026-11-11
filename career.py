@@ -52,7 +52,7 @@ def check_url(url: str) -> None:
     if u.scheme not in ("http", "https") or not netloc or re.search(r"[^a-z0-9.\-]", netloc):
         raise RuntimeError("공고 주소 형식이 아니에요.")
     if not any(netloc == h or netloc.endswith("." + h) for h in ALLOWED_HOSTS):
-        raise RuntimeError("스크립트는 사람인·잡코리아·금투협 주소만 열어요. 이 주소는 에이전트 브라우저로 열어 주세요.")
+        raise RuntimeError("스크립트는 사람인·잡코리아·금투협 주소만 열어요.")
 
 
 class _SafeRedirect(urllib.request.HTTPRedirectHandler):
