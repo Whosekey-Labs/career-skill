@@ -1,14 +1,42 @@
-# 취업·이직 AI 에이전트 스킬 (kr-career-skill)
+<p align="center">
+  <img src="assets/readme/hero.svg" alt="kr-career-skill. 저녁 창가 책상 위 노트북에 공고 목록이 떠 있어요. 퇴근하고 지친 저녁에도 이직 준비를 이어 갈 수 있게 돕는 AI 에이전트 스킬." width="100%">
+</p>
 
-[![tests](https://github.com/Whosekey-Labs/kr-career-skill/actions/workflows/tests.yml/badge.svg)](https://github.com/Whosekey-Labs/kr-career-skill/actions/workflows/tests.yml)
+<p align="center">
+  <a href="https://github.com/Whosekey-Labs/kr-career-skill/actions/workflows/tests.yml"><img src="https://github.com/Whosekey-Labs/kr-career-skill/actions/workflows/tests.yml/badge.svg" alt="tests" height="20"></a>
+  &nbsp;
+  <a href="#준비물"><img src="https://img.shields.io/badge/python-3.9%2B-C7861F?style=flat" alt="python 3.9+" height="20"></a>
+  &nbsp;
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-C7861F?style=flat" alt="MIT license" height="20"></a>
+</p>
 
-AI 에이전트에게 링크 하나만 주면 **맞춤 공고 찾기 → 회사 분석 → 자소서·이력서 초안(내 구글 문서) → 매일 새 공고 알림**까지 해 주는 AI 에이전트 스킬이에요. 피클, 뮤즈, ChatGPT, Codex, Claude 등 링크를 읽을 수 있는 에이전트에서 쓰도록 만들었어요.
+<p align="center">
+  AI 에이전트에게 링크 하나만 주면 <b>맞춤 공고 찾기 → 회사 분석 → 자소서·이력서 초안(내 구글 문서) → 매일 새 공고 알림</b>까지 해 주는 AI 에이전트 스킬이에요.<br>
+  피클, 뮤즈, ChatGPT, Codex, Claude 등 링크를 읽을 수 있는 에이전트에서 쓰도록 만들었어요.
+</p>
 
-- 피클·뮤즈는 사람 대신 웹·앱 일을 처리해 주는 개인 AI 에이전트예요([피클](https://www.pickle.com), [뮤즈(메타)](https://about.fb.com/ko/news/2026/09/introducing-muse-the-worlds-first-personal-ai-agent-built-for-everyone/)). 이 스킬은 피클에서 실사용 시험을 하며 고쳤어요(v0.8.1).
+<p align="center">
+  <a href="#사용법"><b>사용법</b></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="#이렇게-진행돼요"><b>진행 순서</b></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="#준비물"><b>준비물</b></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="#지원-플랫폼"><b>지원 플랫폼</b></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="#자주-묻는-것"><b>자주 묻는 것</b></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="#주의사항"><b>주의사항</b></a>
+</p>
+
+> [!NOTE]
+> 피클·뮤즈는 사람 대신 웹·앱 일을 처리해 주는 개인 AI 에이전트예요([피클](https://www.pickle.com), [뮤즈(메타)](https://about.fb.com/ko/news/2026/09/introducing-muse-the-worlds-first-personal-ai-agent-built-for-everyone/)). 이 스킬은 피클에서 실사용 시험을 하며 고쳤어요(v0.8.1).
+
+## 만든 이유
+
+이직 준비를 어려워하는 친구가 있었어요. 퇴근하고 나면 체력이 바닥나고, 저녁 먹고 나면 준비할 여력이 없다고 했어요. 그 친구에게 도움이 되길 바라며 만들었어요.
 
 ## 사용법
-
-### 에이전트 앱 (피클·뮤즈·ChatGPT·Codex 등)
 
 에이전트에 아래 한 줄을 보내세요. 그다음은 에이전트가 묻는 대로 답하면 돼요.
 
@@ -16,7 +44,8 @@ AI 에이전트에게 링크 하나만 주면 **맞춤 공고 찾기 → 회사 
 https://raw.githubusercontent.com/Whosekey-Labs/kr-career-skill/main/SKILL.md 이 지침 읽고 그대로 해줘. 나 취업(이직) 준비 도와줘.
 ```
 
-### Claude Code
+<details>
+<summary><b>Claude Code에서 스킬로 두고 쓰기</b></summary>
 
 - 위 한 줄을 그대로 보내도 돼요(링크를 읽어 지침대로 시작해요).
 - 스킬로 두려면 작업 폴더에서 아래처럼 받아 두세요. 새로 시작한 Claude Code의 스킬 목록에 `kr-career-skill`로 잡혀요.
@@ -25,12 +54,22 @@ https://raw.githubusercontent.com/Whosekey-Labs/kr-career-skill/main/SKILL.md �
 git clone https://github.com/Whosekey-Labs/kr-career-skill .claude/skills/kr-career-skill
 ```
 
+</details>
+
+## 이렇게 진행돼요
+
+<p align="center">
+  <img src="assets/readme/flow.svg" alt="진행 순서: 처음 한 번 연결 점검과 최소 프로필을 정한 뒤, 1 맞춤 공고 찾기, 2 고른 공고 1~2개의 회사 분석과 요건 정리, 3 자소서·이력서 초안을 내 구글 문서로, 4 원하면 매일 새 공고 알림." width="100%">
+</p>
+
 ## 준비물
 
-- **에이전트**: 링크(웹 페이지)를 읽을 수 있으면 돼요.
-- **파이썬 (있으면 좋아요)**: 에이전트가 파이썬을 실행할 수 있으면 `career.py`로 공고를 찾아요(스크립트 모드). 표준 라이브러리만 써서 설치할 것은 없고, 파이썬 3.9 이상이 필요해요(3.10·3.12에서 자동 테스트). Windows에서는 `python3` 대신 `python`으로 실행하세요.
-- **브라우저 (없으면 스크립트만)**: 파이썬을 못 쓰거나 스크립트가 실패하면, 그리고 스크립트가 지원하지 않는 사이트(캐치·링커리어·직군 전문 사이트 일부)는 에이전트의 브라우저로 열어요(브라우저 모드).
-- **구글 계정 연결 (선택)**: 연결하면 자소서·회사 분석이 내 구글 드라이브에 문서로 생겨요.
+| 준비물 | 필요한가요? | 설명 |
+|---|---|---|
+| **에이전트** | 필수 | 링크(웹 페이지)를 읽을 수 있으면 돼요. |
+| **파이썬** | 있으면 좋아요 | 에이전트가 파이썬을 실행할 수 있으면 `career.py`로 공고를 찾아요(스크립트 모드). 표준 라이브러리만 써서 설치할 것은 없고, 파이썬 3.9 이상이 필요해요(3.10·3.12에서 자동 테스트). Windows에서는 `python3` 대신 `python`으로 실행하세요. |
+| **브라우저** | 없으면 스크립트만 | 파이썬을 못 쓰거나 스크립트가 실패하면, 그리고 스크립트가 지원하지 않는 사이트(캐치·링커리어·직군 전문 사이트 일부)는 에이전트의 브라우저로 열어요(브라우저 모드). |
+| **구글 계정 연결** | 선택 | 연결하면 자소서·회사 분석이 내 구글 드라이브에 문서로 생겨요. |
 
 ## 결과 예시
 
@@ -64,14 +103,52 @@ $ python career.py search -k "백엔드" --sites saramin,wanted,jumpit --locatio
 
 ## 자주 묻는 것
 
-- **준비물이 있나요?** 위 [준비물](#준비물)을 보세요. 예전에 쓴 이력서·자소서가 있으면 내 경험과 말투를 살려 써 줘요(없어도 돼요).
-- **다음 날에는 어떻게 이어 쓰나요?** 그냥 "오늘 새 공고 찾아줘", "이 공고로 자소서 써줘"라고 말하면 돼요. 에이전트가 설정을 잊은 것 같으면 위 링크 문장을 한 번 더 보내세요. 기억 기능이 없는 에이전트는 처음에 받은 내 설정 문서를 같이 붙여 주세요.
-- **결과물은 어디에 생기나요?** 구글을 연결했으면 내 구글 드라이브에 문서로 생겨요. 아니면 워드·PDF 파일이나 채팅으로 받아요.
-- **매일 알림은 어떻게 끄나요?** "알림 꺼줘"라고 말하면 돼요. "알림 시간 바꿔줘"도 돼요.
-- **내 정보는 어디에 저장되나요?** 쓰는 에이전트의 기억(메모리)에만 요약으로 저장돼요. 이력서·자소서 원문은 저장하지 않고, 이 저장소나 개발자에게 보내지 않아요.
-- **대신 지원도 해 주나요?** 아니요. 지원서 제출은 본인이 직접 해요.
+<details>
+<summary><b>준비물이 있나요?</b></summary>
+
+위 [준비물](#준비물)을 보세요. 예전에 쓴 이력서·자소서가 있으면 내 경험과 말투를 살려 써 줘요(없어도 돼요).
+
+</details>
+
+<details>
+<summary><b>다음 날에는 어떻게 이어 쓰나요?</b></summary>
+
+그냥 "오늘 새 공고 찾아줘", "이 공고로 자소서 써줘"라고 말하면 돼요. 에이전트가 설정을 잊은 것 같으면 위 링크 문장을 한 번 더 보내세요. 기억 기능이 없는 에이전트는 처음에 받은 내 설정 문서를 같이 붙여 주세요.
+
+</details>
+
+<details>
+<summary><b>결과물은 어디에 생기나요?</b></summary>
+
+구글을 연결했으면 내 구글 드라이브에 문서로 생겨요. 아니면 워드·PDF 파일이나 채팅으로 받아요.
+
+</details>
+
+<details>
+<summary><b>매일 알림은 어떻게 끄나요?</b></summary>
+
+"알림 꺼줘"라고 말하면 돼요. "알림 시간 바꿔줘"도 돼요.
+
+</details>
+
+<details>
+<summary><b>내 정보는 어디에 저장되나요?</b></summary>
+
+쓰는 에이전트의 기억(메모리)에만 요약으로 저장돼요. 이력서·자소서 원문은 저장하지 않고, 이 저장소나 개발자에게 보내지 않아요.
+
+</details>
+
+<details>
+<summary><b>대신 지원도 해 주나요?</b></summary>
+
+아니요. 지원서 제출은 본인이 직접 해요.
+
+</details>
 
 ## 들어 있는 것
+
+<details>
+<summary>파일 구성 보기</summary>
 
 | 파일 | 내용 |
 |---|---|
@@ -87,6 +164,8 @@ $ python career.py search -k "백엔드" --sites saramin,wanted,jumpit --locatio
 | `guides/feedback.md` | 빠진 사이트·오류를 저장소 이슈로 제보 |
 | `career.py` | 파이썬 기본 기능만 쓰는 검색 도우미 (설치 필요 없음) |
 | `SITES.md` | 지원 플랫폼 전체 목록 (자동 생성) |
+
+</details>
 
 <!-- sites:start -->
 ## 지원 플랫폼
@@ -137,7 +216,8 @@ python3 career.py count -i 자소서.md      # 문항별 글자 수 (공백 포�
 python3 -m unittest discover tests      # 테스트 (실제 사이트에 요청하지 않아요)
 ```
 
-### 스크립트가 사이트를 여는 방식
+<details>
+<summary><b>스크립트가 사이트를 여는 방식</b></summary>
 
 - 허용 목록(`ALLOWED_HOSTS`)에 있는 채용 사이트 주소만 열어요. 회사 조회(`company`·`wayback`)용 사이트는 따로 두고, 공고 검색·본문 읽기에서는 열지 않아요.
 - 같은 사이트는 1초 + 0~0.8초 랜덤 간격을 두고 열어요.
@@ -147,14 +227,18 @@ python3 -m unittest discover tests      # 테스트 (실제 사이트에 요청�
 - 일반 브라우저 User-Agent 하나를 고정해서 써요(바꿔 가며 쓰지 않아요).
 - 로그인이나 보안 확인이 필요한 사이트는 스크립트로 열지 않고 에이전트 브라우저에 맡겨요.
 
+</details>
+
 ## 주의사항
 
-- **본인 구직용으로만 쓰세요.** 공고 내용의 권리는 각 채용 사이트와 회사에 있어요. 찾은 공고를 모아서 다른 곳에 다시 올리거나 팔지 마세요.
+> [!IMPORTANT]
+> - **본인 구직용으로만 쓰세요.** 공고 내용의 권리는 각 채용 사이트와 회사에 있어요. 찾은 공고를 모아서 다른 곳에 다시 올리거나 팔지 마세요.
+> - **지원은 본인이 직접 해요.** 이 스킬은 대신 지원하지 않아요.
+
 - **지원 전에 공고 원문을 한 번 열어 보세요.** 마감일·급여·조건은 사이트에 적힌 그대로 가져오고, 자소서 쓰기 전에 마감 여부를 다시 확인해요. 다만 이미지로 된 공고에서 읽은 값에는 "(이미지에서 읽음)"이 붙는데, 이건 꼭 원문과 대조하세요. 공고는 회사 사정으로 바뀔 수 있어요.
 - **자소서는 초안이에요.** 숫자와 경험은 본인이 확인하고 고쳐서 내세요. AI로 쓴 자소서를 제한하는 회사도 있으니 공고 안내를 확인하세요.
 - **민감한 정보는 채팅에 쓰지 마세요.** 주민등록번호, 계좌·카드 번호, 비밀번호는 입력하지 마세요. 채용 사이트 로그인은 에이전트 앱의 로그인·금고 기능으로만 연결하세요.
 - **취업 사기를 조심하세요.** 선입금·교육비·장비값 요구, 통장·체크카드 요구, 하는 일이 불분명한 고수익 재택, 인수금을 내야 하는 지입은 의심하세요. 에이전트가 이런 공고를 보면 알려 드려요.
-- **지원은 본인이 직접 해요.** 이 스킬은 대신 지원하지 않아요.
 - **천천히 쓰세요.** 스크립트는 같은 사이트를 1~1.8초 간격으로 천천히 열어요. 그래도 짧은 시간에 너무 많이 검색하면 사이트가 접속을 막을 수 있고, 에이전트의 하루 무료 사용량도 빨리 줄어요.
 - **제보할 때 개인정보를 적지 마세요.** 이슈는 누구나 보는 공개 글이에요.
 
@@ -167,7 +251,6 @@ python3 -m unittest discover tests      # 테스트 (실제 사이트에 요청�
 - [djfksjd/cover-letter-team](https://github.com/djfksjd/cover-letter-team) (MIT) — 경험 검증 질문, 지원동기 따로 묻기, 공고의 AI 사용 규정 확인
 - [useful-skills/job-application-skills](https://github.com/useful-skills/job-application-skills) (MIT) — 출처 등급, 같은 이름 법인 확인, 회사 규모별 확인 항목
 - [wing0828/ai-job-search-kr](https://github.com/wing0828/ai-job-search-kr) (MIT) — 문항별 경험 배분, 글자 수 목표
-- 그 밖에 공개 강의·글(면접왕 이형, 링커리어 DART 보는 법 등)의 아이디어
 
 ## 라이선스
 

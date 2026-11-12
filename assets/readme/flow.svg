@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 300" width="1280" height="300" role="img" aria-labelledby="t d">
+  <title id="t">진행 순서</title>
+  <desc id="d">처음 한 번 연결 점검과 최소 프로필을 정한 뒤, 1 맞춤 공고 찾기, 2 고른 공고의 회사 분석과 요건 정리, 3 자소서·이력서 초안을 내 구글 문서로, 4 원하면 매일 새 공고 알림 순서로 진행해요.</desc>
+  <style>
+    .ko{font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif}
+    .flow{stroke-dasharray:2 10;animation:flow 1.4s linear infinite}
+    @keyframes flow{to{stroke-dashoffset:-24}}
+    @media (prefers-reduced-motion:reduce){.flow{animation:none}}
+  </style>
+  <defs>
+    <clipPath id="card"><rect width="1280" height="300" rx="24"/></clipPath>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1A1D33"/>
+      <stop offset="1" stop-color="#22263F"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#card)">
+    <rect width="1280" height="300" fill="url(#bg)"/>
+
+    <!-- 처음 한 번 -->
+    <rect x="72" y="34" width="444" height="36" rx="18" fill="none" stroke="#4A4F80" stroke-width="1.5"/>
+    <text x="94" y="58" class="ko" font-size="15" fill="#A9ACCB"><tspan fill="#F3B54A" font-weight="700">처음 한 번</tspan>  연결 점검 → 최소 프로필 (직무·지역·경력·희망 조건)</text>
+
+    <!-- 잇는 선 -->
+    <g stroke="#F3B54A" stroke-width="3" stroke-linecap="round" fill="none">
+      <line class="flow" x1="230" y1="138" x2="460" y2="138"/>
+      <line class="flow" x1="530" y1="138" x2="760" y2="138"/>
+      <line class="flow" x1="830" y1="138" x2="1060" y2="138" opacity=".6"/>
+    </g>
+    <g fill="#F3B54A">
+      <path d="M452 131 l10 7 l-10 7 z"/>
+      <path d="M752 131 l10 7 l-10 7 z"/>
+      <path d="M1052 131 l10 7 l-10 7 z" opacity=".6"/>
+    </g>
+
+    <!-- 1 -->
+    <circle cx="195" cy="138" r="30" fill="#F3B54A"/>
+    <text x="195" y="148" text-anchor="middle" class="ko" font-size="26" font-weight="800" fill="#1A1D33">1</text>
+    <text x="195" y="208" text-anchor="middle" class="ko" font-size="22" font-weight="700" fill="#F4EEE2">맞춤 공고 찾기</text>
+    <text x="195" y="238" text-anchor="middle" class="ko" font-size="15" fill="#A9ACCB">스크립트 + 에이전트 브라우저</text>
+
+    <!-- 2 -->
+    <circle cx="495" cy="138" r="30" fill="#F3B54A"/>
+    <text x="495" y="148" text-anchor="middle" class="ko" font-size="26" font-weight="800" fill="#1A1D33">2</text>
+    <text x="495" y="208" text-anchor="middle" class="ko" font-size="22" font-weight="700" fill="#F4EEE2">회사 분석·요건 정리</text>
+    <text x="495" y="238" text-anchor="middle" class="ko" font-size="15" fill="#A9ACCB">고른 공고 1~2개만</text>
+
+    <!-- 3 -->
+    <circle cx="795" cy="138" r="30" fill="#F3B54A"/>
+    <text x="795" y="148" text-anchor="middle" class="ko" font-size="26" font-weight="800" fill="#1A1D33">3</text>
+    <text x="795" y="208" text-anchor="middle" class="ko" font-size="22" font-weight="700" fill="#F4EEE2">자소서·이력서 초안</text>
+    <text x="795" y="238" text-anchor="middle" class="ko" font-size="15" fill="#A9ACCB">내 구글 문서로</text>
+
+    <!-- 4 (원하면) -->
+    <circle cx="1095" cy="138" r="30" fill="#22263F" stroke="#F3B54A" stroke-width="3" stroke-dasharray="6 5"/>
+    <text x="1095" y="148" text-anchor="middle" class="ko" font-size="26" font-weight="800" fill="#F3B54A">4</text>
+    <text x="1095" y="208" text-anchor="middle" class="ko" font-size="22" font-weight="700" fill="#F4EEE2">매일 새 공고 알림</text>
+    <text x="1095" y="238" text-anchor="middle" class="ko" font-size="15" fill="#A9ACCB">원하면 예약</text>
+  </g>
+</svg>
