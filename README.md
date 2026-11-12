@@ -38,7 +38,7 @@
 에이전트에 아래 한 줄을 보내세요. 그다음은 에이전트가 묻는 대로 답하면 돼요.
 
 ```
-https://raw.githubusercontent.com/Whosekey-Labs/kr-career-skill/main/SKILL.md 이 지침 읽고 그대로 해줘. 나 취업(이직) 준비 도와줘.
+https://raw.githubusercontent.com/Whosekey-Labs/kr-career-skill/main/SKILL.md 이 스킬 설치하고 지침대로 진행해줘. 나 취업(이직) 준비 도와줘.
 ```
 
 <details>
@@ -119,7 +119,7 @@ $ python career.py search -k "백엔드" --sites saramin,wanted,jumpit --locatio
 <details>
 <summary><b>다음 날에는 어떻게 이어 쓰나요?</b></summary>
 
-그냥 "오늘 새 공고 찾아줘", "이 공고로 자소서 써줘"라고 말하면 돼요. 에이전트가 설정을 잊은 것 같으면 위 링크 문장을 한 번 더 보내세요. 기억 기능이 없는 에이전트는 처음에 받은 내 설정 문서를 같이 붙여 주세요.
+그냥 "오늘 새 공고 찾아줘", "이 공고로 자소서 써줘"라고 말하면 돼요. 스킬을 설치할 수 있는 에이전트는 설치된 스킬로 이어 가요. 에이전트가 설정을 잊은 것 같으면 위 링크 문장을 한 번 더 보내세요. 기억 기능이 없는 에이전트는 처음에 받은 내 설정 문서를 같이 붙여 주세요.
 
 </details>
 
