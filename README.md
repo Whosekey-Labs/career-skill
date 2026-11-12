@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/Whosekey-Labs/kr-career-skill/actions/workflows/tests.yml"><img src="https://github.com/Whosekey-Labs/kr-career-skill/actions/workflows/tests.yml/badge.svg" alt="tests" height="20"></a>
   &nbsp;
-  <a href="#준비물"><img src="https://img.shields.io/badge/python-3.9%2B-C7861F?style=flat" alt="python 3.9+" height="20"></a>
+  <a href="#준비물"><img src="https://img.shields.io/badge/python-optional%2C_3.9%2B-C7861F?style=flat" alt="python optional, 3.9+" height="20"></a>
   &nbsp;
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-C7861F?style=flat" alt="MIT license" height="20"></a>
 </p>
