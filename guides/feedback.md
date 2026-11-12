@@ -27,7 +27,7 @@
 
 ## 등록 방법 (되는 것부터)
 
-1. **깃헙 연결(커넥터·MCP)이 있으면**: `Whosekey-Labs/career-skill` 저장소에 이슈를 만들고 링크를 준다.
+1. **깃헙 연결(커넥터·MCP)이 있으면**: `Whosekey-Labs/kr-career-skill` 저장소에 이슈를 만들고 링크를 준다.
 2. **없으면**: 미리 채운 이슈 링크를 준다. 사용자가 깃헙 로그인 후 "Submit"만 누르면 된다.
-   `https://github.com/Whosekey-Labs/career-skill/issues/new?title={제목}&body={본문}` (제목·본문은 URL 인코딩)
+   `https://github.com/Whosekey-Labs/kr-career-skill/issues/new?title={제목}&body={본문}` (제목·본문은 URL 인코딩)
 3. **깃헙 계정이 없으면**: 오픈채팅방을 안내한다. https://open.kakao.com/o/g3vAeBWi

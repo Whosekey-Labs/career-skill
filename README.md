@@ -1,4 +1,4 @@
-# 취업·이직 AI 에이전트 스킬 (career-skill)
+# 취업·이직 AI 에이전트 스킬 (kr-career-skill)
 
 AI 에이전트에게 링크 하나만 주면 **맞춤 공고 찾기 → 회사 분석 → 자소서·이력서 초안(내 구글 문서) → 매일 새 공고 알림**까지 해 주는 AI 에이전트 스킬이에요. 피클, 뮤즈, ChatGPT, Codex, Claude 등 어떤 에이전트든 쓸 수 있어요.
 
@@ -7,7 +7,7 @@ AI 에이전트에게 링크 하나만 주면 **맞춤 공고 찾기 → 회사 
 피클에 아래 한 줄을 보내세요.
 
 ```
-https://raw.githubusercontent.com/Whosekey-Labs/career-skill/main/SKILL.md 이 지침 읽고 그대로 해줘. 나 취업(이직) 준비 도와줘.
+https://raw.githubusercontent.com/Whosekey-Labs/kr-career-skill/main/SKILL.md 이 지침 읽고 그대로 해줘. 나 취업(이직) 준비 도와줘.
 ```
 
 그다음은 피클이 묻는 대로 답하면 돼요.
@@ -115,6 +115,6 @@ python3 -m unittest discover tests      # 테스트
 
 ## 제보·문의
 
-- 빠진 사이트, 검색 오류, 개선 의견은 [이슈](https://github.com/Whosekey-Labs/career-skill/issues/new/choose)로 남겨 주세요. 에이전트에게 "이거 제보해줘"라고 하면 대신 정리해서 올려 줘요(올리기 전에 내용을 보여 줘요).
+- 빠진 사이트, 검색 오류, 개선 의견은 [이슈](https://github.com/Whosekey-Labs/kr-career-skill/issues/new/choose)로 남겨 주세요. 에이전트에게 "이거 제보해줘"라고 하면 대신 정리해서 올려 줘요(올리기 전에 내용을 보여 줘요).
 - 이슈는 공개 글이에요. 이름·연락처·이력서 같은 개인정보는 적지 마세요.
 - 깃헙 계정이 없으면 오픈채팅방으로 알려 주세요: https://open.kakao.com/o/g3vAeBWi

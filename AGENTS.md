@@ -1,4 +1,4 @@
-# career-skill 작업 지침
+# kr-career-skill 작업 지침
 
 - 에이전트용 진입은 `SKILL.md`. 단계별 내용은 `guides/`. 단계 파일은 그 단계에서만 열도록 짧게 유지한다 (피클 등은 하루 사용량 한도가 있다).
 - `career.py`는 파이썬 표준 라이브러리만 쓴다. 직접 여는 사이트는 `ALLOWED_HOSTS` 허용 목록뿐(임의 주소 금지, SSRF 방지).

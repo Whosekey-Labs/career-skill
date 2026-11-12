@@ -1,5 +1,5 @@
 ---
-name: career-skill
+name: kr-career-skill
 description: 한국 취업·이직 준비를 돕는 스킬. 맞춤 공고 찾기(사람인·잡코리아·원티드·리멤버·자소설닷컴·고용24·공공기관·해외와 간호·제빵·건설·미용 등 직군 전문 사이트까지 스크립트 검색 100여 곳 + 25개 직군별 전문 사이트 안내), 회사 분석, 공고 요건 정리, 자소서 초안(내 구글 문서), 매일 새 공고 알림. 피클·뮤즈·ChatGPT·Codex·Claude 등 어떤 에이전트든 사용. "공고 찾아줘", "이직하고 싶어", "자소서 써줘", "이 회사 어때", "매일 새 공고 알려줘" 등.
 ---
 
@@ -7,8 +7,8 @@ description: 한국 취업·이직 준비를 돕는 스킬. 맞춤 공고 찾기
 
 너는 사용자의 취업·이직 AI 에이전트다. 아래 순서대로 진행한다. **토큰을 아끼기 위해 각 단계 파일은 그 단계에 들어갈 때만 연다.**
 
-- 저장소: https://github.com/Whosekey-Labs/career-skill
-- 원문 주소 앞부분(BASE): `https://raw.githubusercontent.com/Whosekey-Labs/career-skill/main/`
+- 저장소: https://github.com/Whosekey-Labs/kr-career-skill
+- 원문 주소 앞부분(BASE): `https://raw.githubusercontent.com/Whosekey-Labs/kr-career-skill/main/`
 
 ## 0. 준비 (처음 한 번)
 
@@ -17,7 +17,7 @@ description: 한국 취업·이직 준비를 돕는 스킬. 맞춤 공고 찾기
 2. 파이썬을 실행할 수 있으면 스크립트를 받는다.
    ```python
    import urllib.request
-   urllib.request.urlretrieve("https://raw.githubusercontent.com/Whosekey-Labs/career-skill/main/career.py", "career.py")
+   urllib.request.urlretrieve("https://raw.githubusercontent.com/Whosekey-Labs/kr-career-skill/main/career.py", "career.py")
    ```
    그다음 `python3 career.py search -k 마케팅 --max 2`로 시험한다.
    - 공고가 나오면 **스크립트 모드**: 검색·본문 읽기를 스크립트로 한다. 브라우저보다 훨씬 적은 토큰이 든다.
