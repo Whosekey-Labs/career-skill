@@ -1,13 +1,14 @@
 # 취업·이직 AI 에이전트 스킬 (kr-career-skill)
 
+[![tests](https://github.com/Whosekey-Labs/kr-career-skill/actions/workflows/tests.yml/badge.svg)](https://github.com/Whosekey-Labs/kr-career-skill/actions/workflows/tests.yml)
+
 AI 에이전트에게 링크 하나만 주면 **맞춤 공고 찾기 → 회사 분석 → 자소서·이력서 초안(내 구글 문서) → 매일 새 공고 알림**까지 해 주는 AI 에이전트 스킬이에요. 피클, 뮤즈, ChatGPT, Codex, Claude 등 링크를 읽을 수 있는 에이전트에서 쓰도록 만들었어요.
 
-- 피클은 사람 대신 웹·앱 일을 처리해 주는 개인 AI 에이전트 앱이에요([피클](https://www.pickle.com)). 이 스킬은 피클에서 실사용 시험을 하며 고쳤어요(v0.8.1).
-- [후스키랩스(Whosekey-Labs)](https://github.com/Whosekey-Labs)에서 만들고 관리해요.
+- 피클·뮤즈는 사람 대신 웹·앱 일을 처리해 주는 개인 AI 에이전트예요([피클](https://www.pickle.com), [뮤즈(메타)](https://about.fb.com/ko/news/2026/09/introducing-muse-the-worlds-first-personal-ai-agent-built-for-everyone/)). 이 스킬은 피클에서 실사용 시험을 하며 고쳤어요(v0.8.1).
 
 ## 사용법
 
-### 에이전트 앱 (피클·뮤즈·ChatGPT 등)
+### 에이전트 앱 (피클·뮤즈·ChatGPT·Codex 등)
 
 에이전트에 아래 한 줄을 보내세요. 그다음은 에이전트가 묻는 대로 답하면 돼요.
 
@@ -23,10 +24,6 @@ https://raw.githubusercontent.com/Whosekey-Labs/kr-career-skill/main/SKILL.md �
 ```bash
 git clone https://github.com/Whosekey-Labs/kr-career-skill .claude/skills/kr-career-skill
 ```
-
-### Codex 등 다른 에이전트
-
-위 한 줄처럼 `SKILL.md` 링크를 주고 읽게 하세요. 스킬 폴더 설치 방식은 아직 확인하지 않았어요.
 
 ## 준비물
 
