@@ -29,9 +29,6 @@
   <a href="#주의사항"><b>주의사항</b></a>
 </p>
 
-> [!NOTE]
-> 피클·뮤즈는 사람 대신 웹·앱 일을 처리해 주는 개인 AI 에이전트예요([피클](https://www.pickle.com), [뮤즈(메타)](https://about.fb.com/ko/news/2026/09/introducing-muse-the-worlds-first-personal-ai-agent-built-for-everyone/)). 이 스킬은 피클에서 실사용 시험을 하며 고쳤어요(v0.8.1).
-
 ## 만든 이유
 
 이직 준비를 어려워하는 친구가 있었어요. 퇴근하고 나면 체력이 바닥나고, 저녁 먹고 나면 준비할 여력이 없다고 했어요. 그 친구에게 도움이 되길 바라며 만들었어요.
