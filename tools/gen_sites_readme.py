@@ -114,7 +114,7 @@ def build():
             link = f"[{name}]({url})" if url else name
             out.append(f"- {link}" + (f" — {desc}" if desc else ""))
         out.append(f"- 자세히: [`guides/jobs/{path.name}`](guides/jobs/{urllib.parse.quote(path.name)})")
-        SUMMARY.append((title, [n for n, _, _ in sites][:4], path.name))
+        SUMMARY.append((title, list(dict.fromkeys(n for n, _, _ in sites)), path.name))
         out.append("")
     out.insert(4, f"스크립트 검색 {len(career.SITES)}곳 + 직군별 전문 사이트·협회·공공·앱 {total}곳(직군 간 중복 포함, 중복 없이 {len(hosts)}곳).\n")
     global UNIQUE
@@ -124,13 +124,29 @@ def build():
 
 def readme_summary(total: int) -> str:
     keys = list(career.SITES)
+    names = {k: v for k, v in getattr(career, "SITE_NAMES", {}).items()}
+    engine = set(getattr(career, "GNU_SITES", {})) | set(getattr(career, "S2_SITES", {}))         | set(getattr(career, "LINK_SITES", {}))
+    cut = min((keys.index(k) for k in engine), default=len(keys))
+    groups = (("종합·공공·주요 사이트", keys[:cut]), ("직군 전문 사이트", keys[cut:]))
+
+    def label(k):
+        return names.get(k, k).split(" — ")[0]
+
     out = ["## 지원 플랫폼", "",
-           f"- 스크립트로 바로 검색: **{len(keys)}곳** (사람인·잡코리아·원티드·점핏·리멤버·자소설닷컴·고용24·잡알리오 등 + 간호·제빵·건설·미용 등 직군 전문 사이트)",
-           f"- 직군 25개마다 전문 사이트·협회·공공·앱 안내: **중복 없이 {UNIQUE}곳** (직군별로 세면 {total}곳)",
-           "- 전체 목록: [SITES.md](SITES.md)", "",
-           "| 직군 | 대표 전문 사이트 (일부) |", "|---|---|"]
-    for title, names, fname in SUMMARY:
-        out.append(f"| [{title}](guides/jobs/{urllib.parse.quote(fname)}) | {', '.join(names) or '-'} |")
+           "<table>", "<tr>",
+           f'<td align="center" width="33%"><h1>{len(keys)}곳</h1>스크립트로 바로 검색</td>',
+           f'<td align="center" width="33%"><h1>{UNIQUE}곳</h1>직군별 전문 사이트·협회·공공·앱 안내<br><sub>(중복 없이, 직군별로 세면 {total}곳)</sub></td>',
+           f'<td align="center" width="33%"><h1>{len(SUMMARY)}개</h1>직군별 가이드</td>',
+           "</tr>", "</table>", "",
+           "사람인·잡코리아·원티드·점핏·리멤버·자소설닷컴·고용24·잡알리오부터 간호·제빵·건설·미용 같은 직군 전문 사이트까지 찾아요.", ""]
+    for gname, gkeys in groups:
+        out += ["<details>", f"<summary><b>스크립트로 바로 검색 — {gname} {len(gkeys)}곳</b> 펼쳐 보기</summary>", "",
+                " · ".join(label(k) for k in gkeys), "", "</details>", ""]
+    out += ["<details>", f"<summary><b>직군 {len(SUMMARY)}개별 전문 사이트</b> 펼쳐 보기</summary>", "",
+            "| 직군 | 전문 사이트·협회·공공·앱 |", "|---|---|"]
+    for title, all_names, fname in SUMMARY:
+        out.append(f"| [{title}](guides/jobs/{urllib.parse.quote(fname)}) | {', '.join(all_names) or '-'} |")
+    out += ["", "</details>", "", "- 사이트별 주소·강점까지 담은 전체 목록: [SITES.md](SITES.md)"]
     return "\n".join(out) + "\n"
 
 
