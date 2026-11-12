@@ -18,8 +18,8 @@
     <rect width="1280" height="300" fill="url(#bg)"/>
 
     <!-- 처음 한 번 -->
-    <rect x="72" y="34" width="444" height="36" rx="18" fill="none" stroke="#4A4F80" stroke-width="1.5"/>
-    <text x="94" y="58" class="ko" font-size="15" fill="#A9ACCB"><tspan fill="#F3B54A" font-weight="700">처음 한 번</tspan>  연결 점검 → 최소 프로필 (직무·지역·경력·희망 조건)</text>
+    <rect x="72" y="34" width="560" height="38" rx="19" fill="none" stroke="#4A4F80" stroke-width="1.5"/>
+    <text x="94" y="59" class="ko" font-size="16" fill="#A9ACCB"><tspan fill="#F3B54A" font-weight="700">처음 한 번</tspan>  연결 점검 → 최소 프로필 (직무·지역·경력·희망 조건)</text>
 
     <!-- 잇는 선 -->
     <g stroke="#F3B54A" stroke-width="3" stroke-linecap="round" fill="none">
@@ -36,25 +36,25 @@
     <!-- 1 -->
     <circle cx="195" cy="138" r="30" fill="#F3B54A"/>
     <text x="195" y="148" text-anchor="middle" class="ko" font-size="26" font-weight="800" fill="#1A1D33">1</text>
-    <text x="195" y="208" text-anchor="middle" class="ko" font-size="22" font-weight="700" fill="#F4EEE2">맞춤 공고 찾기</text>
-    <text x="195" y="238" text-anchor="middle" class="ko" font-size="15" fill="#A9ACCB">스크립트 + 에이전트 브라우저</text>
+    <text x="195" y="208" text-anchor="middle" class="ko" font-size="24" font-weight="700" fill="#F4EEE2">맞춤 공고 찾기</text>
+    <text x="195" y="242" text-anchor="middle" class="ko" font-size="18" fill="#A9ACCB">스크립트 + 에이전트 브라우저</text>
 
     <!-- 2 -->
     <circle cx="495" cy="138" r="30" fill="#F3B54A"/>
     <text x="495" y="148" text-anchor="middle" class="ko" font-size="26" font-weight="800" fill="#1A1D33">2</text>
-    <text x="495" y="208" text-anchor="middle" class="ko" font-size="22" font-weight="700" fill="#F4EEE2">회사 분석·요건 정리</text>
-    <text x="495" y="238" text-anchor="middle" class="ko" font-size="15" fill="#A9ACCB">고른 공고 1~2개만</text>
+    <text x="495" y="208" text-anchor="middle" class="ko" font-size="24" font-weight="700" fill="#F4EEE2">회사 분석·요건 정리</text>
+    <text x="495" y="242" text-anchor="middle" class="ko" font-size="18" fill="#A9ACCB">고른 공고 1~2개만</text>
 
     <!-- 3 -->
     <circle cx="795" cy="138" r="30" fill="#F3B54A"/>
     <text x="795" y="148" text-anchor="middle" class="ko" font-size="26" font-weight="800" fill="#1A1D33">3</text>
-    <text x="795" y="208" text-anchor="middle" class="ko" font-size="22" font-weight="700" fill="#F4EEE2">자소서·이력서 초안</text>
-    <text x="795" y="238" text-anchor="middle" class="ko" font-size="15" fill="#A9ACCB">내 구글 문서로</text>
+    <text x="795" y="208" text-anchor="middle" class="ko" font-size="24" font-weight="700" fill="#F4EEE2">자소서·이력서 초안</text>
+    <text x="795" y="242" text-anchor="middle" class="ko" font-size="18" fill="#A9ACCB">내 구글 문서로</text>
 
     <!-- 4 (원하면) -->
     <circle cx="1095" cy="138" r="30" fill="#22263F" stroke="#F3B54A" stroke-width="3" stroke-dasharray="6 5"/>
     <text x="1095" y="148" text-anchor="middle" class="ko" font-size="26" font-weight="800" fill="#F3B54A">4</text>
-    <text x="1095" y="208" text-anchor="middle" class="ko" font-size="22" font-weight="700" fill="#F4EEE2">매일 새 공고 알림</text>
-    <text x="1095" y="238" text-anchor="middle" class="ko" font-size="15" fill="#A9ACCB">원하면 예약</text>
+    <text x="1095" y="208" text-anchor="middle" class="ko" font-size="24" font-weight="700" fill="#F4EEE2">매일 새 공고 알림</text>
+    <text x="1095" y="242" text-anchor="middle" class="ko" font-size="18" fill="#A9ACCB">원하면 예약</text>
   </g>
 </svg>
