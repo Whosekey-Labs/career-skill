@@ -36,7 +36,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = "0.8.1"
+VERSION = "0.8.2"
 REPO = "https://github.com/Whosekey-Labs/career-skill"
 # 일반 브라우저와 같은 값 하나만 쓴다 (바꿔 가며 속이지 않는다).
 USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -2234,6 +2234,15 @@ def record_seen(shown) -> None:
     os.replace(tmp, seen_path())
 
 
+def _fold(t):
+    """제목 비교용: 소문자, 띄어쓰기·기호 없앰 ("Product Engineer" == "productengineer")."""
+    return re.sub(r"[\s\-_/·.()\[\]]+", "", (t or "").lower())
+
+
+def _words(v):
+    return [_fold(w) for w in (v or "").split(",") if _fold(w)]
+
+
 def filter_new(jobs):
     """이전에 보여 준 공고를 뺀다 (기록은 하지 않는다. 출력 뒤 record_seen)."""
     seen = load_seen()
@@ -2287,6 +2296,13 @@ def cmd_search(a):
     if getattr(a, "company", None):
         want = norm_company(a.company)
         jobs = [j for j in jobs if want and want in norm_company(j["company"])]
+    has, ex = _words(getattr(a, "title_has", None)), _words(getattr(a, "exclude", None))
+    if has or ex:                    # 여러 업종에 쓰이는 직무명(Product·Engineer·매니저) 걸러내기
+        before = len(jobs)
+        jobs = [j for j in jobs if (not has or any(w in _fold(j["title"]) for w in has))
+                and not any(w in _fold(j["title"]) for w in ex)]
+        if before > len(jobs):
+            notes.append(f"제목 조건에 맞지 않는 공고 {before - len(jobs)}건 뺌")
     if a.new_only:
         jobs = filter_new(jobs)
     found_by = {}
@@ -2701,6 +2717,8 @@ def main():
     s.add_argument("--new-only", action="store_true", help="이전에 보여준 공고 빼기")
     s.add_argument("--json", action="store_true")
     s.add_argument("--company", help="이 회사 공고만 남기기 (구인 이력 확인용)")
+    s.add_argument("--title-has", help="제목에 이 말 중 하나라도 있는 공고만 (쉼표로 여러 개, 띄어쓰기·대소문자 무시)")
+    s.add_argument("--exclude", help="제목에 이 말이 있으면 빼기 (쉼표로 여러 개)")
     s.set_defaults(fn=cmd_search)
 
     t = sub.add_parser("sites", help="검색할 수 있는 사이트 목록")

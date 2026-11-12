@@ -253,3 +253,9 @@ class DefangTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TitleFilterTest(unittest.TestCase):
+    def test_fold_ignores_space_case_symbols(self):
+        self.assertIn(career._fold("product engineer"), career._fold("[차살때] Product-Engineer (풀스택)"))
+        self.assertEqual(career._words("Support, 상품 기획,"), ["support", "상품기획"])
