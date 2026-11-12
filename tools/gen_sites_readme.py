@@ -96,6 +96,7 @@ def build():
     out.append("직군 파일마다 세부 직무·사람인 직무 코드·검색 주소가 더 자세히 있어요. 빠진 사이트는 오픈채팅방으로 알려 주세요.")
     out.append("")
     total = 0
+    hosts = set()
     for path in sorted((ROOT / "guides" / "jobs").glob("[0-9][0-9]-*.md")):
         title, script_keys, sites = parse_job_file(path)
         out.append(f"#### {title}")
@@ -108,12 +109,16 @@ def build():
                 continue
             seen.add((name, url))
             total += 1
+            if url:
+                hosts.add(urllib.parse.urlparse(url).netloc.replace("www.", ""))
             link = f"[{name}]({url})" if url else name
             out.append(f"- {link}" + (f" — {desc}" if desc else ""))
         out.append(f"- 자세히: [`guides/jobs/{path.name}`](guides/jobs/{urllib.parse.quote(path.name)})")
         SUMMARY.append((title, [n for n, _, _ in sites][:4], path.name))
         out.append("")
-    out.insert(4, f"스크립트 검색 {len(career.SITES)}곳 + 직군별 전문 사이트·협회·공공·앱 {total}곳(직군 간 중복 포함).\n")
+    out.insert(4, f"스크립트 검색 {len(career.SITES)}곳 + 직군별 전문 사이트·협회·공공·앱 {total}곳(직군 간 중복 포함, 중복 없이 {len(hosts)}곳).\n")
+    global UNIQUE
+    UNIQUE = len(hosts)
     return "\n".join(out).rstrip() + "\n", total
 
 
@@ -121,7 +126,7 @@ def readme_summary(total: int) -> str:
     keys = list(career.SITES)
     out = ["## 지원 플랫폼", "",
            f"- 스크립트로 바로 검색: **{len(keys)}곳** (사람인·잡코리아·원티드·리멤버·자소설닷컴·고용24·잡알리오 등 + 간호·제빵·건설·미용 등 직군 전문 사이트)",
-           f"- 직군 25개마다 전문 사이트·협회·공공·앱 안내: **{total}곳** (직군 간 중복 포함)",
+           f"- 직군 25개마다 전문 사이트·협회·공공·앱 안내: **중복 없이 {UNIQUE}곳** (직군별로 세면 {total}곳)",
            "- 전체 목록: [SITES.md](SITES.md)", "",
            "| 직군 | 대표 전문 사이트 (일부) |", "|---|---|"]
     for title, names, fname in SUMMARY:
