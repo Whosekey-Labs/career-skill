@@ -178,9 +178,10 @@ $ python career.py search -k "백엔드" --sites saramin,wanted,jumpit --locatio
 
 <table>
 <tr>
-<td align="center" width="33%"><h1>104곳</h1>스크립트로 바로 검색</td>
-<td align="center" width="33%"><h1>213곳</h1>직군별 전문 사이트·협회·공공·앱 안내<br><sub>(중복 없이, 직군별로 세면 328곳)</sub></td>
-<td align="center" width="33%"><h1>25개</h1>직군별 가이드</td>
+<td align="center" width="25%"><h1>277곳</h1><b>총 지원 플랫폼</b><br><sub>(이름 기준 중복 제외)</sub></td>
+<td align="center" width="25%"><h1>104곳</h1>스크립트로 바로 검색</td>
+<td align="center" width="25%"><h1>+173곳</h1>직군별 전문 사이트·협회·공공·앱 안내<br><sub>(에이전트 브라우저·링크)</sub></td>
+<td align="center" width="25%"><h1>25개</h1>직군별 가이드</td>
 </tr>
 </table>
 

@@ -72,6 +72,19 @@ def parse_job_file(path: pathlib.Path):
 SUMMARY: list = []
 
 
+def _norm(name: str) -> str:
+    return name.replace(" (앱)", "").replace(" ", "").lower()
+
+
+def totals():
+    """스크립트 사이트와 직군별 안내 사이트를 이름 기준으로 합쳐 센다."""
+    script = {_norm(career.SITE_NAMES.get(k, k).split(" — ")[0]) for k in career.SITES}
+    job = set()
+    for _, names, _ in SUMMARY:
+        job |= {_norm(n) for n in names}
+    return len(script | job), len(job - script)
+
+
 def build():
     names = {k: v for k, v in getattr(career, "SITE_NAMES", {}).items()}
     out = ["# 지원 플랫폼 전체 목록", "", "이 파일은 `python3 tools/gen_sites_readme.py`가 직군 파일과 career.py에서 자동으로 만들어요. 손으로 고치지 마세요.", ""]
@@ -116,9 +129,10 @@ def build():
         out.append(f"- 자세히: [`guides/jobs/{path.name}`](guides/jobs/{urllib.parse.quote(path.name)})")
         SUMMARY.append((title, list(dict.fromkeys(n for n, _, _ in sites)), path.name))
         out.append("")
-    out.insert(4, f"스크립트 검색 {len(career.SITES)}곳 + 직군별 전문 사이트·협회·공공·앱 {total}곳(직군 간 중복 포함, 중복 없이 {len(hosts)}곳).\n")
-    global UNIQUE
+    global UNIQUE, ALL, JOB_ONLY
     UNIQUE = len(hosts)
+    ALL, JOB_ONLY = totals()
+    out.insert(4, f"총 {ALL}곳(이름 기준 중복 제외): 스크립트 검색 {len(career.SITES)}곳 + 직군별 안내에만 있는 사이트·협회·공공·앱 {JOB_ONLY}곳. 직군별로 세면 {total}곳이에요.\n")
     return "\n".join(out).rstrip() + "\n", total
 
 
@@ -134,9 +148,10 @@ def readme_summary(total: int) -> str:
 
     out = ["## 지원 플랫폼", "",
            "<table>", "<tr>",
-           f'<td align="center" width="33%"><h1>{len(keys)}곳</h1>스크립트로 바로 검색</td>',
-           f'<td align="center" width="33%"><h1>{UNIQUE}곳</h1>직군별 전문 사이트·협회·공공·앱 안내<br><sub>(중복 없이, 직군별로 세면 {total}곳)</sub></td>',
-           f'<td align="center" width="33%"><h1>{len(SUMMARY)}개</h1>직군별 가이드</td>',
+           f'<td align="center" width="25%"><h1>{ALL}곳</h1><b>총 지원 플랫폼</b><br><sub>(이름 기준 중복 제외)</sub></td>',
+           f'<td align="center" width="25%"><h1>{len(keys)}곳</h1>스크립트로 바로 검색</td>',
+           f'<td align="center" width="25%"><h1>+{JOB_ONLY}곳</h1>직군별 전문 사이트·협회·공공·앱 안내<br><sub>(에이전트 브라우저·링크)</sub></td>',
+           f'<td align="center" width="25%"><h1>{len(SUMMARY)}개</h1>직군별 가이드</td>',
            "</tr>", "</table>", "",
            "사람인·잡코리아·원티드·점핏·리멤버·자소설닷컴·고용24·잡알리오부터 간호·제빵·건설·미용 같은 직군 전문 사이트까지 찾아요.", ""]
     for gname, gkeys in groups:
